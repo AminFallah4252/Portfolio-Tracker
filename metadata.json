@@ -1,0 +1,6 @@
+{
+  "name": "Portfolio Tracker & Rebalancer",
+  "description": "Investment portfolio management, asset allocation charts, and automated rebalancing dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
