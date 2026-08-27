@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.CalculatedAsset
@@ -29,6 +30,7 @@ fun RebalanceActionCard(
     currency: String,
     usePersianDigits: Boolean,
     modifier: Modifier = Modifier,
+    isPrivacyMode: Boolean = false,
     onQuickEdit: (() -> Unit)? = null
 ) {
     val categoryColor = item.category?.colorHex?.let { hex ->
@@ -82,7 +84,8 @@ fun RebalanceActionCard(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.weight(1f, fill = false)
                 ) {
                     Box(
                         modifier = Modifier
@@ -98,22 +101,28 @@ fun RebalanceActionCard(
                                 .background(categoryColor)
                         )
                     }
-                    Column {
+                    Column(modifier = Modifier.weight(1f, fill = false)) {
                         Text(
                             text = item.asset.name,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         if (item.category != null) {
                             Text(
                                 text = item.category.name,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.width(8.dp))
 
                 // Action Badge
                 Surface(
@@ -135,7 +144,8 @@ fun RebalanceActionCard(
                             text = badgeLabel,
                             color = badgeTextColor,
                             style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1
                         )
                     }
                 }
@@ -152,42 +162,56 @@ fun RebalanceActionCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = if (isBuy) "مبلغ مورد نیاز برای خرید:" else "مبلغ پیشنهادی برای فروش:",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = CurrencyFormatter.formatCurrency(
                                 Math.abs(item.rebalanceAmount),
                                 currency,
-                                usePersianDigits
+                                usePersianDigits,
+                                isHidden = isPrivacyMode
                             ),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.ExtraBold,
-                            color = badgeTextColor
+                            color = badgeTextColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
 
                     if (item.asset.unitPrice > 0) {
-                        Column(horizontalAlignment = Alignment.End) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column(
+                            horizontalAlignment = Alignment.End,
+                            modifier = Modifier.weight(1f)
+                        ) {
                             Text(
                                 text = if (isBuy) "تعداد/مقدار خرید:" else "تعداد/مقدار فروش:",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = CurrencyFormatter.formatQuantity(
                                     Math.abs(item.rebalanceUnits),
                                     item.asset.symbol,
-                                    usePersianDigits
+                                    usePersianDigits,
+                                    isHidden = isPrivacyMode
                                 ),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
@@ -215,7 +239,7 @@ fun RebalanceActionCard(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = CurrencyFormatter.formatCurrency(item.currentValue, currency, usePersianDigits),
+                            text = CurrencyFormatter.formatCurrency(item.currentValue, currency, usePersianDigits, isHidden = isPrivacyMode),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -233,7 +257,7 @@ fun RebalanceActionCard(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = CurrencyFormatter.formatCurrency(item.targetValue, currency, usePersianDigits),
+                            text = CurrencyFormatter.formatCurrency(item.targetValue, currency, usePersianDigits, isHidden = isPrivacyMode),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary

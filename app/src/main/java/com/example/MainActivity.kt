@@ -1,7 +1,6 @@
 package com.example
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -19,6 +18,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.model.CalculatedAsset
 import com.example.ui.components.*
@@ -28,6 +28,9 @@ import com.example.ui.viewmodel.PortfolioViewModel
 import com.example.util.AppLanguage
 import com.example.util.AppStrings
 import com.example.util.AppThemeMode
+import com.example.util.LocalSoundHaptic
+import com.example.util.SecurityManager
+import com.example.util.SoundHapticHelper
 import com.example.util.Strings
 
 enum class NavigationTab(val icon: ImageVector) {
@@ -48,7 +51,7 @@ enum class NavigationTab(val icon: ImageVector) {
     }
 }
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     private val viewModel: PortfolioViewModel by viewModels()
 
@@ -63,9 +66,21 @@ class MainActivity : ComponentActivity() {
             val strings = AppStrings.get(appLanguage)
             val layoutDirection = if (appLanguage == AppLanguage.PERSIAN) LayoutDirection.Rtl else LayoutDirection.Ltr
 
+            val securityManager = remember { SecurityManager(this@MainActivity) }
+            val soundHapticHelper = remember { SoundHapticHelper(this@MainActivity) }
+            val isSoundEnabled by soundHapticHelper.soundEnabled.collectAsStateWithLifecycle()
+            val isHapticEnabled by soundHapticHelper.hapticEnabled.collectAsStateWithLifecycle()
+            var isPasscodeEnabled by remember { mutableStateOf(securityManager.isPasscodeEnabled) }
+            var isBiometricEnabled by remember { mutableStateOf(securityManager.isBiometricEnabled) }
+            var isUnlocked by remember { mutableStateOf(!securityManager.isPasscodeEnabled) }
+
             MyApplicationTheme(themeMode = themeMode) {
-                CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
+                CompositionLocalProvider(
+                    LocalLayoutDirection provides layoutDirection,
+                    LocalSoundHaptic provides soundHapticHelper
+                ) {
                     val summary by viewModel.portfolioSummary.collectAsStateWithLifecycle()
+                    val allAssets by viewModel.allAssets.collectAsStateWithLifecycle()
                     val filteredAssets by viewModel.filteredCalculatedAssets.collectAsStateWithLifecycle()
                     val allCategories by viewModel.allCategories.collectAsStateWithLifecycle()
                     val snapshots by viewModel.allSnapshots.collectAsStateWithLifecycle()
@@ -77,6 +92,7 @@ class MainActivity : ComponentActivity() {
                     val currency by viewModel.currency.collectAsStateWithLifecycle()
                     val usePersianDigits by viewModel.usePersianDigits.collectAsStateWithLifecycle()
                     val tolerancePercent by viewModel.tolerancePercent.collectAsStateWithLifecycle()
+                    val isPrivacyMode by viewModel.isPrivacyMode.collectAsStateWithLifecycle()
 
                     var currentTab by remember { mutableStateOf(NavigationTab.DASHBOARD) }
 
@@ -88,8 +104,44 @@ class MainActivity : ComponentActivity() {
                     var showCashSimulator by remember { mutableStateOf(false) }
                     var showSettingsDialog by remember { mutableStateOf(false) }
                     var showAddCategoryDialog by remember { mutableStateOf(false) }
+                    var showSetPasscodeDialog by remember { mutableStateOf(false) }
+                    var showBackupRestoreDialog by remember { mutableStateOf(false) }
                     var assetToDelete by remember { mutableStateOf<CalculatedAsset?>(null) }
 
+                    fun triggerBiometric() {
+                        if (securityManager.isBiometricAvailable() && isBiometricEnabled) {
+                            securityManager.showBiometricPrompt(
+                                activity = this@MainActivity,
+                                title = strings.biometricPromptTitle,
+                                subtitle = strings.biometricPromptSubtitle,
+                                negativeButtonText = strings.cancel,
+                                onSuccess = {
+                                    isUnlocked = true
+                                }
+                            )
+                        }
+                    }
+
+                    if (!isUnlocked) {
+                        LockScreen(
+                            strings = strings,
+                            usePersianDigits = usePersianDigits,
+                            isBiometricAvailable = securityManager.isBiometricAvailable(),
+                            isBiometricEnabled = isBiometricEnabled,
+                            onVerifyPin = { pin ->
+                                val ok = securityManager.verifyPin(pin)
+                                if (ok) isUnlocked = true
+                                ok
+                            },
+                            onTriggerBiometric = { triggerBiometric() },
+                            onForgotPasscode = {
+                                securityManager.disableLock()
+                                isPasscodeEnabled = false
+                                viewModel.resetToSampleData()
+                                isUnlocked = true
+                            }
+                        )
+                    } else {
                     Scaffold(
                         topBar = {
                             TopAppBar(
@@ -133,17 +185,15 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 actions = {
-                                    if (!summary.isTargetWeightValid) {
-                                        IconButton(
-                                            onClick = { viewModel.normalizeTargetWeights() },
-                                            modifier = Modifier.testTag("normalize_weights_button")
-                                        ) {
-                                            Icon(
-                                                Icons.Default.Tune,
-                                                contentDescription = strings.autoNormalize,
-                                                tint = MaterialTheme.colorScheme.tertiary
-                                            )
-                                        }
+                                    IconButton(
+                                        onClick = { viewModel.togglePrivacyMode() },
+                                        modifier = Modifier.testTag("privacy_mode_toggle_button")
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isPrivacyMode) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                            contentDescription = if (isPrivacyMode) strings.showValues else strings.hideValues,
+                                            tint = if (isPrivacyMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
                                     }
 
                                     IconButton(
@@ -154,6 +204,17 @@ class MainActivity : ComponentActivity() {
                                             Icons.Default.AccountBalanceWallet,
                                             contentDescription = strings.cashInjection,
                                             tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+
+                                    IconButton(
+                                        onClick = { showBackupRestoreDialog = true },
+                                        modifier = Modifier.testTag("topbar_backup_button")
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Backup,
+                                            contentDescription = strings.backupSection,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
 
@@ -172,6 +233,21 @@ class MainActivity : ComponentActivity() {
                                     containerColor = MaterialTheme.colorScheme.background
                                 )
                             )
+                        },
+                        floatingActionButton = {
+                            if (currentTab == NavigationTab.ASSETS) {
+                                FloatingActionButton(
+                                    onClick = {
+                                        editingAsset = null
+                                        showAddEditAssetDialog = true
+                                    },
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.testTag("fab_add_asset")
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = strings.addNewAsset)
+                                }
+                            }
                         },
                         bottomBar = {
                             NavigationBar(
@@ -231,7 +307,9 @@ class MainActivity : ComponentActivity() {
                                         onQuickEditAsset = { asset ->
                                             quickUpdateTarget = asset
                                             showQuickUpdateDialog = true
-                                        }
+                                        },
+                                        isPrivacyMode = isPrivacyMode,
+                                        onTogglePrivacyMode = { viewModel.togglePrivacyMode() }
                                     )
                                 }
 
@@ -264,7 +342,8 @@ class MainActivity : ComponentActivity() {
                                         },
                                         onDeleteAsset = { asset ->
                                             assetToDelete = asset
-                                        }
+                                        },
+                                        isPrivacyMode = isPrivacyMode
                                     )
                                 }
 
@@ -279,7 +358,8 @@ class MainActivity : ComponentActivity() {
                                         onQuickEditAsset = { asset ->
                                             quickUpdateTarget = asset
                                             showQuickUpdateDialog = true
-                                        }
+                                        },
+                                        isPrivacyMode = isPrivacyMode
                                     )
                                 }
 
@@ -321,12 +401,14 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
+                    }
 
                     // Add / Edit Asset Dialog
                     if (showAddEditAssetDialog) {
                         AddEditAssetDialog(
                             initialAsset = editingAsset?.asset,
                             categories = allCategories,
+                            existingAssets = allAssets,
                             currency = currency,
                             usePersianDigits = usePersianDigits,
                             onDismiss = { showAddEditAssetDialog = false },
@@ -385,7 +467,8 @@ class MainActivity : ComponentActivity() {
                             currency = currency,
                             usePersianDigits = usePersianDigits,
                             onDismiss = { showCashSimulator = false },
-                            onSimulate = { amount -> viewModel.simulateCashInjection(amount) }
+                            onSimulate = { amount -> viewModel.simulateCashInjection(amount) },
+                            onApply = { injections -> viewModel.applyCashInjection(injections) }
                         )
                     }
 
@@ -403,8 +486,60 @@ class MainActivity : ComponentActivity() {
                             onPersianDigitsChange = { viewModel.usePersianDigits.value = it },
                             tolerancePercent = tolerancePercent,
                             onToleranceChange = { viewModel.tolerancePercent.value = it },
-                            onResetSampleData = { viewModel.resetToSampleData() },
+                            isPasscodeEnabled = isPasscodeEnabled,
+                            onPasscodeToggle = { enable ->
+                                if (!enable) {
+                                    securityManager.disableLock()
+                                    isPasscodeEnabled = false
+                                }
+                            },
+                            onOpenSetPasscode = { showSetPasscodeDialog = true },
+                            isBiometricAvailable = securityManager.isBiometricAvailable(),
+                            isBiometricEnabled = isBiometricEnabled,
+                            onBiometricToggle = { enable ->
+                                securityManager.isBiometricEnabled = enable
+                                isBiometricEnabled = enable
+                            },
+                            isSoundEnabled = isSoundEnabled,
+                            onSoundToggle = { soundHapticHelper.setSoundEnabled(it) },
+                            isHapticEnabled = isHapticEnabled,
+                            onHapticToggle = { soundHapticHelper.setHapticEnabled(it) },
+                            onOpenBackupRestore = { showBackupRestoreDialog = true },
+                            onResetSampleData = {
+                                viewModel.resetToSampleData()
+                                soundHapticHelper.warningAction()
+                            },
                             onDismiss = { showSettingsDialog = false }
+                        )
+                    }
+
+                    // Set Passcode Dialog
+                    if (showSetPasscodeDialog) {
+                        SetPasscodeDialog(
+                            strings = strings,
+                            usePersianDigits = usePersianDigits,
+                            onPasscodeSet = { pin ->
+                                securityManager.setPin(pin)
+                                isPasscodeEnabled = true
+                                isUnlocked = true
+                            },
+                            onDismiss = { showSetPasscodeDialog = false }
+                        )
+                    }
+
+                    // Backup & Restore Dialog
+                    if (showBackupRestoreDialog) {
+                        BackupRestoreDialog(
+                            strings = strings,
+                            categories = allCategories,
+                            assets = allAssets,
+                            snapshots = snapshots,
+                            currency = currency,
+                            tolerancePercent = tolerancePercent,
+                            onRestoreData = { payload ->
+                                viewModel.restoreBackup(payload)
+                            },
+                            onDismiss = { showBackupRestoreDialog = false }
                         )
                     }
 

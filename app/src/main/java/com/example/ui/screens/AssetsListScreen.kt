@@ -50,7 +50,8 @@ fun AssetsListScreen(
     onEditAsset: (CalculatedAsset) -> Unit,
     onQuickUpdateAsset: (CalculatedAsset) -> Unit,
     onDeleteAsset: (CalculatedAsset) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isPrivacyMode: Boolean = false
 ) {
     var sortMenuExpanded by remember { mutableStateOf(false) }
 
@@ -210,19 +211,34 @@ fun AssetsListScreen(
             }
         }
 
-        // Asset Count Header
+        // Asset Count Header & Add Asset Action Button
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = strings.assetListTitle(assets.size),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = strings.assetListTitle(assets.size),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    FilledTonalButton(
+                        onClick = onAddAsset,
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.height(32.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(strings.add, style = MaterialTheme.typography.labelSmall)
+                    }
+                }
                 Text(
                     text = "${strings.sortBy}: ${sortOption.getTitle(strings)}",
                     style = MaterialTheme.typography.labelSmall,
@@ -284,6 +300,7 @@ fun AssetsListScreen(
                 item = item,
                 currency = currency,
                 usePersianDigits = usePersianDigits,
+                isPrivacyMode = isPrivacyMode,
                 onEdit = { onEditAsset(item) },
                 onQuickUpdate = { onQuickUpdateAsset(item) },
                 onDelete = { onDeleteAsset(item) }

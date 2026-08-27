@@ -12,31 +12,61 @@ object CurrencyFormatter {
     private val cryptoFormat = DecimalFormat("#,##0.000000")
     private val percentFormat = DecimalFormat("0.0")
 
-    fun formatCurrency(amount: Double, currency: String = "تومان", usePersianDigits: Boolean = false): String {
+    fun formatCurrency(
+        amount: Double,
+        currency: String = "تومان",
+        usePersianDigits: Boolean = false,
+        isHidden: Boolean = false
+    ): String {
+        if (isHidden) {
+            val placeholder = "••••••••"
+            val result = if (currency.isNotBlank()) "$placeholder $currency" else placeholder
+            return if (usePersianDigits) toPersianDigits(result) else result
+        }
         val rounded = Math.round(amount)
         val formatted = numberFormat.format(rounded)
         val result = "$formatted $currency"
         return if (usePersianDigits) toPersianDigits(result) else result
     }
 
-    fun formatNumber(value: Double, usePersianDigits: Boolean = false): String {
-        val formatted = if (value % 1.0 == 0.0) {
+    fun formatNumber(value: Double, usePersianDigits: Boolean = false, isHidden: Boolean = false): String {
+        if (isHidden) return "••••••"
+        val formatted = if (value == 0.0) {
+            "0"
+        } else if (value % 1.0 == 0.0) {
             numberFormat.format(value)
+        } else if (value < 0.0001) {
+            // For tiny numbers e.g. 0.0000222, format up to 10 decimal digits without scientific notation
+            val df = DecimalFormat("#,##0.##########")
+            df.format(value)
         } else if (value < 0.01) {
-            cryptoFormat.format(value)
+            val df = DecimalFormat("#,##0.######")
+            df.format(value)
         } else {
             decimalFormat.format(value)
         }
         return if (usePersianDigits) toPersianDigits(formatted) else formatted
     }
 
-    fun formatQuantity(value: Double, symbol: String = "", usePersianDigits: Boolean = false): String {
-        val formatted = if (value % 1.0 == 0.0) {
+    fun formatQuantity(
+        value: Double,
+        symbol: String = "",
+        usePersianDigits: Boolean = false,
+        isHidden: Boolean = false
+    ): String {
+        if (isHidden) {
+            val placeholder = "••••"
+            val withUnit = if (symbol.isNotBlank()) "$placeholder $symbol" else placeholder
+            return if (usePersianDigits) toPersianDigits(withUnit) else withUnit
+        }
+        val formatted = if (value == 0.0) {
+            "0"
+        } else if (value % 1.0 == 0.0) {
             numberFormat.format(value)
-        } else if (value < 0.001) {
-            cryptoFormat.format(value).trimEnd('0').trimEnd('.')
         } else {
-            decimalFormat.format(value).trimEnd('0').trimEnd('.')
+            // Output high precision floating point format up to 10 decimal places, stripping trailing zeros
+            val df = DecimalFormat("#,##0.##########")
+            df.format(value)
         }
         val withUnit = if (symbol.isNotBlank()) "$formatted $symbol" else formatted
         return if (usePersianDigits) toPersianDigits(withUnit) else withUnit

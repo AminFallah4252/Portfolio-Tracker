@@ -43,8 +43,6 @@ class PortfolioViewModel(application: Application) : AndroidViewModel(applicatio
             database.snapshotDao()
         )
         viewModelScope.launch(Dispatchers.IO) {
-            repository.clearAllAssets()
-            repository.clearAllSnapshots()
             AppDatabase.populateInitialData(database)
         }
     }
@@ -67,6 +65,11 @@ class PortfolioViewModel(application: Application) : AndroidViewModel(applicatio
     val currency = MutableStateFlow("تومان")
     val usePersianDigits = MutableStateFlow(false)
     val tolerancePercent = MutableStateFlow(0.2) // 0.2% tolerance
+    val isPrivacyMode = MutableStateFlow(false)
+
+    fun togglePrivacyMode() {
+        isPrivacyMode.value = !isPrivacyMode.value
+    }
 
     fun toggleLanguage() {
         if (appLanguage.value == AppLanguage.PERSIAN) {
@@ -407,6 +410,22 @@ class PortfolioViewModel(application: Application) : AndroidViewModel(applicatio
         )
     }
 
+    // Apply cash injection: updates each asset's quantity with the bought units
+    fun applyCashInjection(injections: List<Pair<Int, Double>>) { // list of (assetId, additionalUnits)
+        viewModelScope.launch(Dispatchers.IO) {
+            val currentAssets = allAssets.value.associateBy { it.id }
+            injections.forEach { (assetId, additionalUnits) ->
+                if (additionalUnits > 0) {
+                    val asset = currentAssets[assetId]
+                    if (asset != null) {
+                        repository.updateAsset(asset.copy(quantity = asset.quantity + additionalUnits))
+                    }
+                }
+            }
+            recordCurrentSnapshot("تزریق نقدینگی")
+        }
+    }
+
     fun clearAllAssets() {
         viewModelScope.launch(Dispatchers.IO) {
             repository.clearAllAssets()
@@ -420,6 +439,22 @@ class PortfolioViewModel(application: Application) : AndroidViewModel(applicatio
             repository.clearAllAssets()
             repository.clearAllSnapshots()
             AppDatabase.populateInitialData(db)
+        }
+    }
+
+    fun restoreBackup(payload: com.example.util.PortfolioBackupPayload) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.restoreData(
+                categories = payload.categories,
+                assets = payload.assets,
+                snapshots = payload.snapshots
+            )
+            if (payload.currency.isNotBlank()) {
+                currency.value = payload.currency
+            }
+            if (payload.tolerancePercent > 0.0) {
+                tolerancePercent.value = payload.tolerancePercent
+            }
         }
     }
 }

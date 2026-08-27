@@ -27,7 +27,28 @@ class PortfolioRepository(
 
     suspend fun clearAllAssets() = assetDao.clearAssets()
 
+    suspend fun clearAllCategories() = categoryDao.clearCategories()
+
     suspend fun clearAllSnapshots() = snapshotDao.clearSnapshots()
+
+    suspend fun restoreData(
+        categories: List<AssetCategory>,
+        assets: List<AssetItem>,
+        snapshots: List<PortfolioSnapshot>
+    ) {
+        if (categories.isNotEmpty()) {
+            categoryDao.clearCategories()
+            categoryDao.insertCategories(categories)
+        }
+        if (assets.isNotEmpty()) {
+            assetDao.clearAssets()
+            assetDao.insertAssets(assets)
+        }
+        if (snapshots.isNotEmpty()) {
+            snapshotDao.clearSnapshots()
+            snapshotDao.insertSnapshots(snapshots)
+        }
+    }
 
     suspend fun insertCategory(category: AssetCategory): Long = categoryDao.insertCategory(category)
 

@@ -59,6 +59,9 @@ interface CategoryDao {
     @Delete
     suspend fun deleteCategory(category: AssetCategory)
 
+    @Query("DELETE FROM asset_categories")
+    suspend fun clearCategories()
+
     @Query("SELECT COUNT(*) FROM asset_categories")
     suspend fun getCategoryCount(): Int
 }

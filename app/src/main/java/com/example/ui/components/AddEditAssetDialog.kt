@@ -2,6 +2,7 @@ package com.example.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -11,6 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,6 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -32,6 +35,7 @@ import com.example.util.CurrencyFormatter
 fun AddEditAssetDialog(
     initialAsset: AssetItem? = null,
     categories: List<AssetCategory>,
+    existingAssets: List<AssetItem> = emptyList(),
     currency: String,
     usePersianDigits: Boolean,
     onDismiss: () -> Unit,
@@ -55,6 +59,13 @@ fun AddEditAssetDialog(
 
     val selectedCategory = categories.find { it.id == selectedCategoryId } ?: categories.firstOrNull()
 
+    // Sibling assets in the same category (excluding current asset if editing)
+    val siblingAssets = existingAssets.filter { it.categoryId == selectedCategoryId && it.id != (initialAsset?.id ?: -1) }
+    val currentSiblingWeightSum = siblingAssets.sumOf { it.targetWeight }
+    val parentClassTarget = selectedCategory?.targetWeight ?: 100.0
+    val maxAllowedWeight = Math.max(0.0, parentClassTarget - currentSiblingWeightSum)
+    val isExceedingParent = targetWeight > (maxAllowedWeight + 0.05) && parentClassTarget > 0
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -62,7 +73,7 @@ fun AddEditAssetDialog(
         Surface(
             modifier = Modifier
                 .fillMaxWidth(0.95f)
-                .fillMaxHeight(0.9f)
+                .fillMaxHeight(0.92f)
                 .clip(RoundedCornerShape(24.dp)),
             color = MaterialTheme.colorScheme.surface,
             tonalElevation = 6.dp
@@ -217,12 +228,13 @@ fun AddEditAssetDialog(
                         shape = RoundedCornerShape(12.dp)
                     )
 
-                    // Target Weight with Slider
+                    // Target Weight with Slider & Parent Target Option
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
-                            .padding(14.dp)
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -238,7 +250,7 @@ fun AddEditAssetDialog(
                                 text = CurrencyFormatter.formatPercent(targetWeight, usePersianDigits),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
+                                color = if (isExceedingParent) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
                             )
                         }
 
@@ -250,17 +262,83 @@ fun AddEditAssetDialog(
                             modifier = Modifier.fillMaxWidth()
                         )
 
+                        // Parent Class Target Shortcuts
+                        if (selectedCategory != null && selectedCategory.targetWeight > 0) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                FilterChip(
+                                    selected = Math.abs(targetWeight - selectedCategory.targetWeight) < 0.1,
+                                    onClick = { targetWeightStr = selectedCategory.targetWeight.toString() },
+                                    label = {
+                                        Text(
+                                            "۱۰۰٪ سهم کلاس (${CurrencyFormatter.formatPercent(selectedCategory.targetWeight, usePersianDigits)})",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 1
+                                        )
+                                    }
+                                )
+
+                                if (siblingAssets.isNotEmpty() && maxAllowedWeight > 0 && maxAllowedWeight < selectedCategory.targetWeight) {
+                                    FilterChip(
+                                        selected = Math.abs(targetWeight - maxAllowedWeight) < 0.1,
+                                        onClick = { targetWeightStr = String.format("%.1f", maxAllowedWeight) },
+                                        label = {
+                                            Text(
+                                                "باقیمانده کلاس (${CurrencyFormatter.formatPercent(maxAllowedWeight, usePersianDigits)})",
+                                                fontSize = 11.sp,
+                                                maxLines = 1
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        // Warning if exceeding parent class percentage
+                        if (isExceedingParent) {
+                            Surface(
+                                color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Info,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Text(
+                                        text = "مجموع وزن دارایی‌های این کلاس نباید از سهم کل کلاس (${CurrencyFormatter.formatPercent(parentClassTarget, usePersianDigits)}) بیشتر شود. (حداکثر مجاز: ${CurrencyFormatter.formatPercent(maxAllowedWeight, usePersianDigits)})",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onErrorContainer
+                                    )
+                                }
+                            }
+                        }
+
                         // Quick presets
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            listOf(5.0, 10.0, 15.0, 20.0, 30.0, 45.0).forEach { preset ->
+                            listOf(5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 40.0, 50.0).forEach { preset ->
                                 FilterChip(
                                     selected = Math.abs(targetWeight - preset) < 0.1,
                                     onClick = { targetWeightStr = preset.toString() },
-                                    label = { Text("${preset.toInt()}%", fontSize = 11.sp) },
-                                    modifier = Modifier.weight(1f)
+                                    label = { Text("${preset.toInt()}%", fontSize = 11.sp, maxLines = 1) }
                                 )
                             }
                         }

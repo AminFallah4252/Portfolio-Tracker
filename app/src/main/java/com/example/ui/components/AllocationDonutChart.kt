@@ -32,6 +32,7 @@ fun AllocationDonutChart(
     currency: String,
     usePersianDigits: Boolean,
     modifier: Modifier = Modifier,
+    isPrivacyMode: Boolean = false,
     onAssetSelected: ((CalculatedAsset?) -> Unit)? = null
 ) {
     var selectedIndex by remember { mutableStateOf<Int?>(null) }
@@ -167,7 +168,7 @@ fun AllocationDonutChart(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = CurrencyFormatter.formatCurrency(selected.currentValue, currency, usePersianDigits),
+                    text = CurrencyFormatter.formatCurrency(selected.currentValue, currency, usePersianDigits, isHidden = isPrivacyMode),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -180,7 +181,7 @@ fun AllocationDonutChart(
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    text = CurrencyFormatter.formatCurrency(totalValue, currency, usePersianDigits),
+                    text = CurrencyFormatter.formatCurrency(totalValue, currency, usePersianDigits, isHidden = isPrivacyMode),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onSurface,

@@ -39,7 +39,8 @@ fun RebalanceScreen(
     onNormalizeWeights: () -> Unit,
     onOpenCashSimulator: () -> Unit,
     onQuickEditAsset: (CalculatedAsset) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isPrivacyMode: Boolean = false
 ) {
     var selectedTab by remember { mutableStateOf(0) } // 0: All, 1: Buys, 2: Sells, 3: Balanced
 
@@ -145,7 +146,7 @@ fun RebalanceScreen(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = CurrencyFormatter.formatCurrency(summary.totalBuyAmount, currency, usePersianDigits),
+                                    text = CurrencyFormatter.formatCurrency(summary.totalBuyAmount, currency, usePersianDigits, isHidden = isPrivacyMode),
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = ActionBuyGreen
@@ -173,7 +174,7 @@ fun RebalanceScreen(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = CurrencyFormatter.formatCurrency(summary.totalSellAmount, currency, usePersianDigits),
+                                    text = CurrencyFormatter.formatCurrency(summary.totalSellAmount, currency, usePersianDigits, isHidden = isPrivacyMode),
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = ActionSellRed
@@ -201,7 +202,7 @@ fun RebalanceScreen(
             }
         }
 
-        // 3. Target Weights Normalization Banner (if weights != 100%)
+        // 3. Target Weights Status Indicator (if weights != 100%)
         if (!summary.isTargetWeightValid) {
             item {
                 Card(
@@ -213,9 +214,14 @@ fun RebalanceScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(14.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Icon(
+                            Icons.Default.WarningAmber,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onErrorContainer
+                        )
                         Column {
                             Text(
                                 text = strings.targetWeightsInvalid(CurrencyFormatter.formatPercent(summary.totalTargetWeight, usePersianDigits)),
@@ -228,14 +234,6 @@ fun RebalanceScreen(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onErrorContainer
                             )
-                        }
-
-                        Button(
-                            onClick = onNormalizeWeights,
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Text(strings.autoNormalize)
                         }
                     }
                 }
@@ -306,6 +304,7 @@ fun RebalanceScreen(
                     item = asset,
                     currency = currency,
                     usePersianDigits = usePersianDigits,
+                    isPrivacyMode = isPrivacyMode,
                     onQuickEdit = { onQuickEditAsset(asset) }
                 )
             }

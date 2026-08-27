@@ -56,12 +56,6 @@ abstract class AppDatabase : RoomDatabase() {
 
         suspend fun populateInitialData(database: AppDatabase) {
             val categoryDao = database.categoryDao()
-            val assetDao = database.assetDao()
-            val snapshotDao = database.snapshotDao()
-
-            // Always ensure assets and snapshots are clean
-            assetDao.clearAssets()
-            snapshotDao.clearSnapshots()
 
             if (categoryDao.getCategoryCount() > 0) return
 

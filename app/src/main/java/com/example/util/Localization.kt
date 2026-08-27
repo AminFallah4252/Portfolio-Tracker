@@ -52,6 +52,9 @@ interface Strings {
 
     // Dashboard
     val totalPortfolioValue: String
+    val hideValues: String
+    val showValues: String
+    val privacyMode: String
     val assetsCount: (Int) -> String
     val buyNeeded: String
     val sellSurplus: String
@@ -175,6 +178,48 @@ interface Strings {
     val resetConfirmAction: String
     val applyAndClose: String
 
+    // Sound & Haptics
+    val soundHapticsSection: String
+    val soundEffects: String
+    val soundEffectsSubtitle: String
+    val hapticFeedback: String
+    val hapticSubtitle: String
+
+    // Security & Lock
+    val securitySection: String
+    val passcodeLock: String
+    val passcodeSubtitle: String
+    val setPasscode: String
+    val changePasscode: String
+    val removePasscode: String
+    val enterPasscode: String
+    val enterNewPasscode: String
+    val confirmPasscode: String
+    val passcodesDoNotMatch: String
+    val passcodeIncorrect: String
+    val biometricUnlock: String
+    val biometricSubtitle: String
+    val biometricPromptTitle: String
+    val biometricPromptSubtitle: String
+    val unlockApp: String
+    val forgotPasscode: String
+    val resetPasscodeConfirm: String
+
+    // Backup & Import/Export
+    val backupSection: String
+    val exportData: String
+    val exportSubtitle: String
+    val importData: String
+    val importSubtitle: String
+    val copyJson: String
+    val shareBackup: String
+    val pasteJson: String
+    val importConfirmTitle: String
+    val importConfirmText: (Int, Int, Int) -> String
+    val importSuccess: String
+    val exportSuccess: String
+    val importError: String
+
     // Form fields
     val fieldName: String
     val fieldSymbol: String
@@ -220,6 +265,9 @@ object PersianStrings : Strings {
     override val sortNameAsc = "نام دارایی (الفبا)"
 
     override val totalPortfolioValue = "ارزش کل پورتفوی"
+    override val hideValues = "مخفی‌سازی مقادیر"
+    override val showValues = "نمایش مقادیر"
+    override val privacyMode = "حالت حریم خصوصی"
     override val assetsCount: (Int) -> String = { "$it دارایی" }
     override val buyNeeded = "مجموع خرید لازم"
     override val sellSurplus = "مجموع فروش (سیو سود)"
@@ -335,6 +383,50 @@ object PersianStrings : Strings {
     override val resetConfirmAction = "بازنشانی"
     override val applyAndClose = "ذخیره و اعمال"
 
+    // Sound & Haptics
+    override val soundHapticsSection = "صدا و بازخورد لمسی (Haptic)"
+    override val soundEffects = "افکت‌های صوتی تعاملی"
+    override val soundEffectsSubtitle = "پخش صدای ملایم کلیدها، تایید و عملیات"
+    override val hapticFeedback = "بازخورد لرزشی (Haptic)"
+    override val hapticSubtitle = "لرزش حسی کوتاه هنگام کلیک، سوئیچ و تغییرات"
+
+    // Security & Lock
+    override val securitySection = "امنیت و قفل برنامه"
+    override val passcodeLock = "قفل با رمز عبور (PIN)"
+    override val passcodeSubtitle = "درخواست رمز هنگام ورود به برنامه"
+    override val setPasscode = "تنظیم رمز عبور"
+    override val changePasscode = "تغییر رمز عبور"
+    override val removePasscode = "حذف رمز عبور"
+    override val enterPasscode = "رمز عبور را وارد کنید"
+    override val enterNewPasscode = "رمز عبور ۴ رقمی جدید را وارد کنید"
+    override val confirmPasscode = "تکرار رمز عبور جدید"
+    override val passcodesDoNotMatch = "رمزهای وارد شده یکسان نیستند"
+    override val passcodeIncorrect = "رمز عبور نادرست است"
+    override val biometricUnlock = "ورود با اثر انگشت / بیومتریک"
+    override val biometricSubtitle = "استفاده از سنسور اثر انگشت یا چهره برای بازگشایی سریع"
+    override val biometricPromptTitle = "بازگشایی سبد دارایی"
+    override val biometricPromptSubtitle = "جهت احراز هویت، حسگر اثر انگشت را لمس کنید"
+    override val unlockApp = "بازگشایی قفل برنامه"
+    override val forgotPasscode = "فراموشی رمز عبور؟"
+    override val resetPasscodeConfirm = "در صورت فراموشی رمز، با بازنشانی اطلاعات به داده‌های اولیه می‌توانید وارد شوید."
+
+    // Backup & Import/Export
+    override val backupSection = "پشتیبان‌گیری و انتقال داده‌ها"
+    override val exportData = "خروجی گرفتن از داده‌ها (Export)"
+    override val exportSubtitle = "دریافت فایل پشتیبان JSON از کلیه دارایی‌ها، کلاس‌ها و تاریخچه"
+    override val importData = "بارگذاری فایل پشتیبان (Import)"
+    override val importSubtitle = "بازیابی اطلاعات از فایل پشتیبان JSON یا متن"
+    override val copyJson = "کپی متن پشتیبان (JSON)"
+    override val shareBackup = "اشتراک‌گذاری / ذخیره فایل"
+    override val pasteJson = "چسباندن و وارد کردن متن JSON"
+    override val importConfirmTitle = "تایید بازیابی فایل پشتیبان"
+    override val importConfirmText: (Int, Int, Int) -> String = { assets, cats, snaps ->
+        "فایل پشتیبان شامل $assets دارایی، $cats کلاس دارایی و $snaps رکورد تاریخچه است. آیا مایلید داده‌های فعلی با این اطلاعات جایگزین شوند؟"
+    }
+    override val importSuccess = "اطلاعات با موفقیت بازیابی شد"
+    override val exportSuccess = "فایل پشتیبان با موفقیت ایجاد شد"
+    override val importError = "فایل پشتیبان نامعتبر یا دارای خطا است"
+
     override val fieldName = "نام دارایی (مثال: طلا بلو)"
     override val fieldSymbol = "نماد یا کد اختصاری (اختیاری)"
     override val fieldCategory = "کلاس دارایی"
@@ -379,6 +471,9 @@ object EnglishStrings : Strings {
     override val sortNameAsc = "Asset Name (A-Z)"
 
     override val totalPortfolioValue = "Total Portfolio Value"
+    override val hideValues = "Hide Values"
+    override val showValues = "Show Values"
+    override val privacyMode = "Privacy Mode"
     override val assetsCount: (Int) -> String = { "$it Assets" }
     override val buyNeeded = "Total Buy Needed"
     override val sellSurplus = "Total Sell Surplus"
@@ -493,6 +588,50 @@ object EnglishStrings : Strings {
     override val resetConfirmText = "Are you sure you want to reload default sample assets (Gold, Stocks, USDT, Copper, Fixed Income, etc.)?"
     override val resetConfirmAction = "Reset"
     override val applyAndClose = "Save & Apply"
+
+    // Sound & Haptics
+    override val soundHapticsSection = "Sound & Haptic Feedback"
+    override val soundEffects = "UI Sound Effects"
+    override val soundEffectsSubtitle = "Play subtle sounds for taps, keypads, and success cues"
+    override val hapticFeedback = "Haptic Vibration Feedback"
+    override val hapticSubtitle = "Tactile physical vibration on interactions"
+
+    // Security & Lock
+    override val securitySection = "Security & App Lock"
+    override val passcodeLock = "Passcode Lock (PIN)"
+    override val passcodeSubtitle = "Require numeric PIN when opening the app"
+    override val setPasscode = "Set PIN Passcode"
+    override val changePasscode = "Change PIN"
+    override val removePasscode = "Remove PIN"
+    override val enterPasscode = "Enter Passcode"
+    override val enterNewPasscode = "Enter 4-digit New PIN"
+    override val confirmPasscode = "Confirm New PIN"
+    override val passcodesDoNotMatch = "Entered PINs do not match"
+    override val passcodeIncorrect = "Incorrect PIN"
+    override val biometricUnlock = "Fingerprint / Biometrics"
+    override val biometricSubtitle = "Use biometric sensor for quick unlock"
+    override val biometricPromptTitle = "Unlock Portfolio"
+    override val biometricPromptSubtitle = "Touch the fingerprint sensor to authenticate"
+    override val unlockApp = "Unlock App"
+    override val forgotPasscode = "Forgot PIN?"
+    override val resetPasscodeConfirm = "In case you forgot your PIN, resetting to sample data will restore access."
+
+    // Backup & Import/Export
+    override val backupSection = "Data Backup & Transfer"
+    override val exportData = "Export Backup Data (JSON)"
+    override val exportSubtitle = "Export full JSON backup of all holdings, categories & history"
+    override val importData = "Import Backup Data (JSON)"
+    override val importSubtitle = "Restore holdings from a backup JSON file or text"
+    override val copyJson = "Copy JSON to Clipboard"
+    override val shareBackup = "Share / Save Backup File"
+    override val pasteJson = "Paste JSON Content"
+    override val importConfirmTitle = "Confirm Data Restore"
+    override val importConfirmText: (Int, Int, Int) -> String = { assets, cats, snaps ->
+        "Backup contains $assets assets, $cats asset classes and $snaps history records. Replace current portfolio with this data?"
+    }
+    override val importSuccess = "Portfolio restored successfully"
+    override val exportSuccess = "Backup created successfully"
+    override val importError = "Invalid or corrupted backup format"
 
     override val fieldName = "Asset Name (e.g. Gold Blue)"
     override val fieldSymbol = "Symbol / Ticker (Optional)"

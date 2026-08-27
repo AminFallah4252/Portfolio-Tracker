@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,7 +46,9 @@ fun DashboardScreen(
     onNormalizeWeights: () -> Unit,
     onRecordSnapshot: () -> Unit,
     onQuickEditAsset: (CalculatedAsset) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isPrivacyMode: Boolean = false,
+    onTogglePrivacyMode: () -> Unit = {}
 ) {
     var selectedChartAsset by remember { mutableStateOf<CalculatedAsset?>(null) }
 
@@ -79,12 +82,30 @@ fun DashboardScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = strings.totalPortfolioValue,
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = strings.totalPortfolioValue,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
+                            )
+                            IconButton(
+                                onClick = onTogglePrivacyMode,
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .testTag("dashboard_privacy_toggle_button")
+                            ) {
+                                Icon(
+                                    imageVector = if (isPrivacyMode) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = if (isPrivacyMode) strings.showValues else strings.hideValues,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
                         Surface(
                             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
                             shape = RoundedCornerShape(10.dp)
@@ -100,7 +121,7 @@ fun DashboardScreen(
                     }
 
                     Text(
-                        text = CurrencyFormatter.formatCurrency(summary.totalValue, currency, usePersianDigits),
+                        text = CurrencyFormatter.formatCurrency(summary.totalValue, currency, usePersianDigits, isHidden = isPrivacyMode),
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -167,17 +188,6 @@ fun DashboardScreen(
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
-
-                        if (!isValid) {
-                            FilledTonalButton(
-                                onClick = onNormalizeWeights,
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.height(28.dp)
-                            ) {
-                                Text(strings.autoNormalize, style = MaterialTheme.typography.labelSmall)
-                            }
-                        }
                     }
                 }
             }
@@ -212,7 +222,7 @@ fun DashboardScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = CurrencyFormatter.formatCurrency(summary.totalBuyAmount, currency, usePersianDigits),
+                            text = CurrencyFormatter.formatCurrency(summary.totalBuyAmount, currency, usePersianDigits, isHidden = isPrivacyMode),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = ActionBuyGreen
@@ -248,7 +258,7 @@ fun DashboardScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = CurrencyFormatter.formatCurrency(summary.totalSellAmount, currency, usePersianDigits),
+                            text = CurrencyFormatter.formatCurrency(summary.totalSellAmount, currency, usePersianDigits, isHidden = isPrivacyMode),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = ActionSellRed
@@ -332,6 +342,7 @@ fun DashboardScreen(
                         totalValue = summary.totalValue,
                         currency = currency,
                         usePersianDigits = usePersianDigits,
+                        isPrivacyMode = isPrivacyMode,
                         onAssetSelected = { selectedChartAsset = it }
                     )
 
@@ -446,6 +457,7 @@ fun DashboardScreen(
                         item = asset,
                         currency = currency,
                         usePersianDigits = usePersianDigits,
+                        isPrivacyMode = isPrivacyMode,
                         onQuickEdit = { onQuickEditAsset(asset) }
                     )
                 }
