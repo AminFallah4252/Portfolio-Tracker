@@ -14,21 +14,22 @@
                 android:endY="108"
                 android:type="linear">
                 <item android:color="#0F172A" android:offset="0.0" />
-                <item android:color="#1E293B" android:offset="0.5" />
+                <item android:color="#312E81" android:offset="0.55" />
                 <item android:color="#064E3B" android:offset="1.0" />
             </gradient>
         </aapt:attr>
     </path>
-    <!-- Subtle grid lines for financial theme -->
+    <!-- Modern geometric tech pattern -->
     <path
         android:fillColor="#00000000"
-        android:pathData="M18,18L90,18 M18,36L90,36 M18,54L90,54 M18,72L90,72 M18,90L90,90"
-        android:strokeWidth="0.5"
-        android:strokeColor="#1FFFFFFF" />
+        android:pathData="M24,24L84,24 M24,44L84,44 M24,64L84,64 M24,84L84,84"
+        android:strokeWidth="0.6"
+        android:strokeColor="#15FFFFFF" />
     <path
         android:fillColor="#00000000"
-        android:pathData="M18,18L18,90 M36,18L36,90 M54,18L54,90 M72,18L72,90 M90,18L90,90"
-        android:strokeWidth="0.5"
-        android:strokeColor="#1FFFFFFF" />
+        android:pathData="M24,24L24,84 M44,24L44,84 M64,24L64,84 M84,24L84,84"
+        android:strokeWidth="0.6"
+        android:strokeColor="#15FFFFFF" />
 </vector>
+
 

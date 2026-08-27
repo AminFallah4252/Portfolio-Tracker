@@ -11,7 +11,7 @@ data class CalculatedAsset(
     val asset: AssetItem,
     val category: AssetCategory?,
     val currentValue: Double,
-    val currentWeight: Double,      // in percentage of total net worth 0..100
+    val currentWeight: Double,      // in percentage of LIQUID/ACTIVE portfolio 0..100 (excludes frozen values)
     val targetValue: Double,
     val rebalanceAmount: Double,    // targetLiquidValue - currentLiquidValue (positive = Buy, negative = Sell, 0 for 100% frozen)
     val rebalanceUnits: Double,     // rebalanceAmount / unitPrice
@@ -20,16 +20,20 @@ data class CalculatedAsset(
     val liquidValue: Double = currentValue * (asset.effectiveLiquidPercent / 100.0),
     val frozenValue: Double = currentValue * (asset.effectiveFrozenPercent / 100.0),
     val targetLiquidValue: Double = 0.0,
-    val liquidWeight: Double = 0.0
+    val liquidWeight: Double = currentWeight,
+    val netWorthWeight: Double = 0.0
 )
 
 data class CategorySummary(
     val category: AssetCategory,
     val totalValue: Double,
-    val currentWeight: Double,
+    val currentWeight: Double,      // in percentage of LIQUID/ACTIVE portfolio (excludes frozen values)
     val targetWeight: Double,
     val assetCount: Int,
-    val frozenValue: Double = 0.0
+    val frozenValue: Double = 0.0,
+    val liquidValue: Double = 0.0,
+    val liquidWeight: Double = currentWeight,
+    val netWorthWeight: Double = 0.0
 )
 
 data class PortfolioSummary(

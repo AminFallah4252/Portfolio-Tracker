@@ -3,42 +3,62 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Outer Ring / Donut Arc (Asset Allocation) -->
+
+    <!-- Outer Multi-Segment Donut Ring (Asset Allocation) within safe zone 66dp -->
+    <!-- Segment 1: Emerald Green (Top-Right) -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="#10B981"
-        android:strokeWidth="5"
+        android:strokeWidth="6"
         android:strokeLineCap="round"
-        android:pathData="M54,26 A28,28 0 0,1 82,54" />
+        android:pathData="M54,27 A27,27 0 0,1 81,54" />
+
+    <!-- Segment 2: Vibrant Indigo/Purple (Bottom-Right) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#818CF8"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="M81,54 A27,27 0 0,1 54,81" />
+
+    <!-- Segment 3: Amber Gold (Bottom-Left) -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="#F59E0B"
-        android:strokeWidth="5"
+        android:strokeWidth="6"
         android:strokeLineCap="round"
-        android:pathData="M82,54 A28,28 0 0,1 54,82" />
+        android:pathData="M54,81 A27,27 0 0,1 27,54" />
+
+    <!-- Segment 4: Cyan / Sky Blue (Top-Left) -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#3B82F6"
-        android:strokeWidth="5"
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="6"
         android:strokeLineCap="round"
-        android:pathData="M54,82 A28,28 0 0,1 26,54" />
+        android:pathData="M27,54 A27,27 0 0,1 54,27" />
+
+    <!-- Center Glowing Disc Base -->
+    <path
+        android:fillColor="#1E1B4B"
+        android:pathData="M54,39 A15,15 0 1,0 54,69 A15,15 0 1,0 54,39 Z" />
+
+    <!-- Center Growth Chart Line & Arrow -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#EC4899"
-        android:strokeWidth="5"
+        android:strokeColor="#34D399"
+        android:strokeWidth="3.5"
         android:strokeLineCap="round"
-        android:pathData="M26,54 A28,28 0 0,1 54,26" />
+        android:strokeLineJoin="round"
+        android:pathData="M42,59 L49,52 L55,57 L66,45" />
 
-    <!-- Center Growth Chart / Trend Arrow -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M44,60 L50,54 L55,59 L66,46 L66,51 A1.5,1.5 0 0,0 69,51 L69,42 A1.5,1.5 0 0,0 67.5,40.5 L58.5,40.5 A1.5,1.5 0 0,0 58.5,43.5 L63.8,43.5 L54.9,54.7 L50.1,49.9 A1.5,1.5 0 0,0 47.9,49.9 L41.9,55.9 A1.5,1.5 0 0,0 44,60 Z" />
-
-    <!-- Center Balance Nodes -->
+    <!-- Arrow Head -->
     <path
         android:fillColor="#34D399"
-        android:pathData="M54,48 A6,6 0 1,0 54,60 A6,6 0 1,0 54,48 Z" />
+        android:pathData="M61,43.5 L67.5,43.5 L67.5,50 Z" />
+
+    <!-- Center Fulcrum Balance Scale Node -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,51 A3,3 0 1,0 54,57 A3,3 0 1,0 54,51 Z" />
+        android:pathData="M54,51 A3.5,3.5 0 1,0 54,58 A3.5,3.5 0 1,0 54,51 Z" />
 </vector>
+

@@ -292,13 +292,15 @@ private data class FilterParams(
 
             val frozenVal = totalCurrentValue * (asset.effectiveFrozenPercent / 100.0)
             val liquidVal = totalCurrentValue * (asset.effectiveLiquidPercent / 100.0)
+            val currentLiquidWeight = if (liquidTotal > 0) (liquidVal / liquidTotal) * 100.0 else 0.0
 
             if (asset.isFullyFrozen) {
                 CalculatedAsset(
                     asset = asset,
                     category = categoryMap[asset.categoryId],
                     currentValue = totalCurrentValue,
-                    currentWeight = currentNetWorthWeight,
+                    currentWeight = 0.0, // Frozen asset has 0.0% weight in active balancing portfolio
+                    netWorthWeight = currentNetWorthWeight,
                     targetValue = totalCurrentValue, // Fully frozen assets are not adjusted
                     rebalanceAmount = 0.0,
                     rebalanceUnits = 0.0,
@@ -316,7 +318,6 @@ private data class FilterParams(
                 val rebalanceUnits = if (asset.unitPrice > 0) rebalanceAmount / asset.unitPrice else 0.0
 
                 // Compare liquid share vs liquid target weight
-                val currentLiquidWeight = if (liquidTotal > 0) (liquidVal / liquidTotal) * 100.0 else 0.0
                 val deviation = currentLiquidWeight - asset.targetWeight
 
                 val actionType = when {
@@ -329,7 +330,8 @@ private data class FilterParams(
                     asset = asset,
                     category = categoryMap[asset.categoryId],
                     currentValue = totalCurrentValue,
-                    currentWeight = currentNetWorthWeight,
+                    currentWeight = currentLiquidWeight, // Frozen values are NOT calculated in current weight!
+                    netWorthWeight = currentNetWorthWeight,
                     targetValue = targetTotalVal,
                     rebalanceAmount = rebalanceAmount,
                     rebalanceUnits = rebalanceUnits,
@@ -369,17 +371,22 @@ private data class FilterParams(
         val categorySummaries = categories.map { cat ->
             val catAssets = calculatedAssets.filter { it.asset.categoryId == cat.id }
             val catTotal = catAssets.sumOf { it.currentValue }
+            val catLiquid = catAssets.sumOf { it.liquidValue }
             val catFrozen = catAssets.sumOf { it.frozenValue }
-            val catWeight = if (totalNetWorth > 0) (catTotal / totalNetWorth) * 100.0 else 0.0
+            val catNetWorthWeight = if (totalNetWorth > 0) (catTotal / totalNetWorth) * 100.0 else 0.0
+            val catLiquidWeight = if (liquidTotal > 0) (catLiquid / liquidTotal) * 100.0 else 0.0
             val catTargetWeight = catAssets.filter { !it.asset.isFullyFrozen }.sumOf { it.asset.targetWeight }
 
             CategorySummary(
                 category = cat,
                 totalValue = catTotal,
-                currentWeight = catWeight,
+                currentWeight = catLiquidWeight, // Frozen values are NOT calculated in class current weight!
                 targetWeight = catTargetWeight,
                 assetCount = catAssets.size,
-                frozenValue = catFrozen
+                frozenValue = catFrozen,
+                liquidValue = catLiquid,
+                liquidWeight = catLiquidWeight,
+                netWorthWeight = catNetWorthWeight
             )
         }.filter { it.totalValue > 0 || it.targetWeight > 0 }
 

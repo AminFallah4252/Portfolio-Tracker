@@ -73,6 +73,7 @@ class MainActivity : FragmentActivity() {
             var isPasscodeEnabled by remember { mutableStateOf(securityManager.isPasscodeEnabled) }
             var isBiometricEnabled by remember { mutableStateOf(securityManager.isBiometricEnabled) }
             var isUnlocked by remember { mutableStateOf(!securityManager.isPasscodeEnabled) }
+            var showSplashScreen by remember { mutableStateOf(true) }
 
             MyApplicationTheme(themeMode = themeMode) {
                 CompositionLocalProvider(
@@ -144,7 +145,17 @@ class MainActivity : FragmentActivity() {
                         }
                     }
 
-                    if (!isUnlocked) {
+                    if (showSplashScreen) {
+                        AnimatedSplashScreen(
+                            strings = strings,
+                            onSplashFinished = {
+                                showSplashScreen = false
+                                if (!isUnlocked && securityManager.isBiometricAvailable() && isBiometricEnabled) {
+                                    triggerBiometric { isUnlocked = true }
+                                }
+                            }
+                        )
+                    } else if (!isUnlocked) {
                         LockScreen(
                             strings = strings,
                             usePersianDigits = usePersianDigits,

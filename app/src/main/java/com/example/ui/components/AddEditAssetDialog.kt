@@ -10,13 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AcUnit
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.LockOpen
-import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -97,6 +91,7 @@ fun AddEditAssetDialog(
         Surface(
             modifier = Modifier
                 .fillMaxWidth(0.95f)
+                .widthIn(max = 560.dp)
                 .fillMaxHeight(0.92f)
                 .clip(RoundedCornerShape(24.dp)),
             color = MaterialTheme.colorScheme.surface,
@@ -152,30 +147,33 @@ fun AddEditAssetDialog(
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    // Asset Name & Symbol
-                    Row(
+                    // Asset Name
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("${strings.fieldName} *") },
+                        placeholder = { Text("بیت‌کوین، طلا، صندوق درآمد ثابت...") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        },
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = name,
-                            onValueChange = { name = it },
-                            label = { Text(strings.fieldName) },
-                            placeholder = { Text("بیت‌کوین، طلا، تتر...") },
-                            modifier = Modifier.weight(1.8f),
-                            singleLine = true,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        OutlinedTextField(
-                            value = symbol,
-                            onValueChange = { symbol = it },
-                            label = { Text(strings.fieldSymbol) },
-                            placeholder = { Text("BTC") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                    }
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    // Asset Symbol
+                    OutlinedTextField(
+                        value = symbol,
+                        onValueChange = { symbol = it.uppercase().trim() },
+                        label = { Text(strings.fieldSymbol) },
+                        placeholder = { Text("BTC, GOLD, USDT...") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Label, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp)
+                    )
 
                     // Special Frozen Asset Toggle & Percentage Controls
                     Card(

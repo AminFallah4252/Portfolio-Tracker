@@ -2,79 +2,89 @@ package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Light Scheme Colors - Professional Polish Theme
-val PrimaryLight = Color(0xFF6750A4)       // M3 Deep Violet
+// Light Scheme Colors - High Contrast Professional Theme
+val PrimaryLight = Color(0xFF583DA1)       // Deep Royal Violet
 val OnPrimaryLight = Color(0xFFFFFFFF)
-val PrimaryContainerLight = Color(0xFFEADDFF) // Lavender Hero Card
-val OnPrimaryContainerLight = Color(0xFF21005D) // Deep Royal Purple
+val PrimaryContainerLight = Color(0xFFEDE7F6) // Soft Lavender Container
+val OnPrimaryContainerLight = Color(0xFF24005A) // High Contrast Deep Violet
 
-val SecondaryLight = Color(0xFF625B71)     // Slate Mauve
+val SecondaryLight = Color(0xFF475569)     // Slate Gray
 val OnSecondaryLight = Color(0xFFFFFFFF)
-val SecondaryContainerLight = Color(0xFFE8DEF8) // Soft Lilac
-val OnSecondaryContainerLight = Color(0xFF1D192B)
+val SecondaryContainerLight = Color(0xFFF1F5F9) // Clean Slate Container
+val OnSecondaryContainerLight = Color(0xFF0F172A)
 
-val TertiaryLight = Color(0xFF7D5260)      // Muted Rose
+val TertiaryLight = Color(0xFF0D9488)      // Deep Teal
 val OnTertiaryLight = Color(0xFFFFFFFF)
-val TertiaryContainerLight = Color(0xFFFFD8E4)
-val OnTertiaryContainerLight = Color(0xFF31111D)
+val TertiaryContainerLight = Color(0xFFCCFBF1)
+val OnTertiaryContainerLight = Color(0xFF115E59)
 
-val BackgroundLight = Color(0xFFF7F2FA)    // Soft M3 Lavender Tinted Background
-val OnBackgroundLight = Color(0xFF1C1B1F)
-val SurfaceLight = Color(0xFFFFFFFF)       // Crisp White Card
-val OnSurfaceLight = Color(0xFF1C1B1F)
-val SurfaceVariantLight = Color(0xFFF3EDF7) // Light Lilac Surface Variant
-val OnSurfaceVariantLight = Color(0xFF49454F) // Refined Secondary M3 Text
-val OutlineLight = Color(0xFFCAC4D0)       // Crisp M3 Border Outline
-val OutlineVariantLight = Color(0xFFE7E0EC)
+val BackgroundLight = Color(0xFFF8FAFC)    // Crisp Off-White Background
+val OnBackgroundLight = Color(0xFF0F172A)   // High Contrast Dark Slate Text
+val SurfaceLight = Color(0xFFFFFFFF)       // Pure White Card
+val OnSurfaceLight = Color(0xFF0F172A)      // Sharp Text (900 slate)
+val SurfaceVariantLight = Color(0xFFF1F5F9) // Crisp Light Surface Variant
+val OnSurfaceVariantLight = Color(0xFF334155) // Highly readable secondary text (700 slate)
+val OutlineLight = Color(0xFFCBD5E1)       // Clean M3 Border Outline
+val OutlineVariantLight = Color(0xFFE2E8F0)
 
-// Accent Highlight Pill (Matching Tailwind #d0bcff)
-val AccentPillLight = Color(0xFFD0BCFF)
-val OnAccentPillLight = Color(0xFF21005D)
+// Accent Highlight Pill
+val AccentPillLight = Color(0xFFDDD6FE)
+val OnAccentPillLight = Color(0xFF2E1065)
 
-// Dark Scheme Colors
-val PrimaryDark = Color(0xFFD0BCFF)        // Light Lavender
-val OnPrimaryDark = Color(0xFF381E72)
-val PrimaryContainerDark = Color(0xFF4F378B)
-val OnPrimaryContainerDark = Color(0xFFEADDFF)
+// Dark Scheme Colors - High Contrast Dark Theme
+val PrimaryDark = Color(0xFFC4B5FD)        // Luminous Lavender
+val OnPrimaryDark = Color(0xFF2E1065)
+val PrimaryContainerDark = Color(0xFF4C1D95)
+val OnPrimaryContainerDark = Color(0xFFEDE9FE)
 
-val SecondaryDark = Color(0xFFCCC2DC)
-val OnSecondaryDark = Color(0xFF332D41)
-val SecondaryContainerDark = Color(0xFF4A4458)
-val OnSecondaryContainerDark = Color(0xFFE8DEF8)
+val SecondaryDark = Color(0xFF94A3B8)      // Light Slate
+val OnSecondaryDark = Color(0xFF0F172A)
+val SecondaryContainerDark = Color(0xFF334155)
+val OnSecondaryContainerDark = Color(0xFFF1F5F9)
 
-val TertiaryDark = Color(0xFFEFB8C8)
-val OnTertiaryDark = Color(0xFF492532)
-val TertiaryContainerDark = Color(0xFF633B48)
-val OnTertiaryContainerDark = Color(0xFFFFD8E4)
+val TertiaryDark = Color(0xFF5EEAD4)       // Bright Teal
+val OnTertiaryDark = Color(0xFF134E4A)
+val TertiaryContainerDark = Color(0xFF115E59)
+val OnTertiaryContainerDark = Color(0xFFCCFBF1)
 
-val BackgroundDark = Color(0xFF141218)     // Deep M3 Dark Background
-val OnBackgroundDark = Color(0xFFE6E1E5)
-val SurfaceDark = Color(0xFF1D1B20)        // Dark Purple-Slate Surface
-val OnSurfaceDark = Color(0xFFE6E1E5)
-val SurfaceVariantDark = Color(0xFF49454F)
-val OnSurfaceVariantDark = Color(0xFFCAC4D0)
-val OutlineDark = Color(0xFF938F99)
-val OutlineVariantDark = Color(0xFF49454F)
+val BackgroundDark = Color(0xFF0B0F19)     // Deep Dark Canvas
+val OnBackgroundDark = Color(0xFFF8FAFC)
+val SurfaceDark = Color(0xFF111827)        // Dark Card Surface
+val OnSurfaceDark = Color(0xFFF8FAFC)       // Crisp Light Text
+val SurfaceVariantDark = Color(0xFF1F2937) // Slate 800
+val OnSurfaceVariantDark = Color(0xFFCBD5E1) // High Contrast Subtitle (300 slate)
+val OutlineDark = Color(0xFF475569)
+val OutlineVariantDark = Color(0xFF334155)
 
-// Functional Financial Colors (Refined & Accessible)
-val ActionBuyGreen = Color(0xFF1D8C40)       // Professional Forest Green
-val ActionBuyContainer = Color(0xFFDCFCE7)
-val ActionSellRed = Color(0xFFB3261E)        // Refined Alert Crimson
-val ActionSellContainer = Color(0xFFFEE2E2)
-val ActionBalancedGray = Color(0xFF625B71)
-val ActionBalancedContainer = Color(0xFFF3EDF7)
+// Functional Financial Colors (High Contrast & Clear)
+val ActionBuyGreen = Color(0xFF15803D)       // Dark Rich Green for Light Mode text
+val ActionBuyGreenDark = Color(0xFF4ADE80)   // Vibrant Green for Dark Mode
+val ActionBuyContainer = Color(0xFFDCFCE7)   // Emerald 100
+val ActionBuyContainerDark = Color(0xFF064E3B).copy(alpha = 0.5f)
+
+val ActionSellRed = Color(0xFFDC2626)        // Bold Crimson Red
+val ActionSellRedDark = Color(0xFFF87171)    // Bright Coral Red for Dark Mode
+val ActionSellContainer = Color(0xFFFEE2E2)  // Rose 100
+val ActionSellContainerDark = Color(0xFF7F1D1D).copy(alpha = 0.5f)
+
+val ActionBalancedGray = Color(0xFF475569)
+val ActionBalancedContainer = Color(0xFFF1F5F9)
+
+val ActionFrozenBlue = Color(0xFF0369A1)     // Deep Sky Blue
+val ActionFrozenContainer = Color(0xFFE0F2FE) // Sky 100
 
 // Professional Polish Palette for Charts & Categories
 val ChartColors = listOf(
-    Color(0xFF6750A4), // Deep Purple
-    Color(0xFF958DA5), // Slate Lilac
-    Color(0xFFD0BCFF), // Light Lavender
-    Color(0xFF1D8C40), // Forest Green
-    Color(0xFFD97706), // Amber Gold
-    Color(0xFF2563EB), // Sapphire Blue
-    Color(0xFFE11D48), // Ruby Rose
-    Color(0xFF0D9488), // Deep Teal
-    Color(0xFFEA580C), // Tangerine
-    Color(0xFF7C3AED)  // Electric Violet
+    Color(0xFF6366F1), // Indigo
+    Color(0xFF10B981), // Emerald
+    Color(0xFFF59E0B), // Amber
+    Color(0xFF3B82F6), // Blue
+    Color(0xFFEC4899), // Pink
+    Color(0xFF8B5CF6), // Purple
+    Color(0xFF14B8A6), // Teal
+    Color(0xFFF97316), // Orange
+    Color(0xFF06B6D4), // Cyan
+    Color(0xFFE11D48)  // Rose
 )
+
 

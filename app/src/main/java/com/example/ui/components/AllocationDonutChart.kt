@@ -162,7 +162,7 @@ fun AllocationDonutChart(
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    text = CurrencyFormatter.formatPercent(selected.currentWeight, usePersianDigits),
+                    text = CurrencyFormatter.formatPercent(selected.netWorthWeight, usePersianDigits),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onSurface
