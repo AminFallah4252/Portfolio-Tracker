@@ -80,14 +80,17 @@ class MainActivity : FragmentActivity() {
                     LocalSoundHaptic provides soundHapticHelper
                 ) {
                     val summary by viewModel.portfolioSummary.collectAsStateWithLifecycle()
-                    val allAssets by viewModel.allAssets.collectAsStateWithLifecycle()
+                    val allPortfolios by viewModel.allPortfolios.collectAsStateWithLifecycle()
+                    val currentPortfolio by viewModel.currentPortfolio.collectAsStateWithLifecycle()
+                    val allAssets by viewModel.allAssetsForActivePortfolio.collectAsStateWithLifecycle()
                     val filteredAssets by viewModel.filteredCalculatedAssets.collectAsStateWithLifecycle()
                     val allCategories by viewModel.allCategories.collectAsStateWithLifecycle()
-                    val snapshots by viewModel.allSnapshots.collectAsStateWithLifecycle()
+                    val snapshots by viewModel.allSnapshotsForActivePortfolio.collectAsStateWithLifecycle()
 
                     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
                     val categoryFilter by viewModel.selectedCategoryFilter.collectAsStateWithLifecycle()
                     val actionFilter by viewModel.selectedActionFilter.collectAsStateWithLifecycle()
+                    val showFrozenOnly by viewModel.showFrozenOnly.collectAsStateWithLifecycle()
                     val sortOption by viewModel.sortOption.collectAsStateWithLifecycle()
                     val currency by viewModel.currency.collectAsStateWithLifecycle()
                     val usePersianDigits by viewModel.usePersianDigits.collectAsStateWithLifecycle()
@@ -106,19 +109,38 @@ class MainActivity : FragmentActivity() {
                     var showAddCategoryDialog by remember { mutableStateOf(false) }
                     var showSetPasscodeDialog by remember { mutableStateOf(false) }
                     var showBackupRestoreDialog by remember { mutableStateOf(false) }
+                    var showUnlockPrivacyDialog by remember { mutableStateOf(false) }
                     var assetToDelete by remember { mutableStateOf<CalculatedAsset?>(null) }
 
-                    fun triggerBiometric() {
+                    fun triggerBiometric(onSuccess: () -> Unit) {
                         if (securityManager.isBiometricAvailable() && isBiometricEnabled) {
                             securityManager.showBiometricPrompt(
                                 activity = this@MainActivity,
                                 title = strings.biometricPromptTitle,
                                 subtitle = strings.biometricPromptSubtitle,
                                 negativeButtonText = strings.cancel,
-                                onSuccess = {
-                                    isUnlocked = true
-                                }
+                                onSuccess = onSuccess
                             )
+                        }
+                    }
+
+                    fun requestUnhidePrivacy() {
+                        if (isPrivacyMode) {
+                            // Trying to unhide
+                            if (securityManager.isPasscodeEnabled) {
+                                if (securityManager.isBiometricAvailable() && isBiometricEnabled) {
+                                    triggerBiometric {
+                                        viewModel.setPrivacyMode(false)
+                                    }
+                                } else {
+                                    showUnlockPrivacyDialog = true
+                                }
+                            } else {
+                                viewModel.setPrivacyMode(false)
+                            }
+                        } else {
+                            // Hiding requires no auth
+                            viewModel.setPrivacyMode(true)
                         }
                     }
 
@@ -133,11 +155,13 @@ class MainActivity : FragmentActivity() {
                                 if (ok) isUnlocked = true
                                 ok
                             },
-                            onTriggerBiometric = { triggerBiometric() },
+                            onTriggerBiometric = {
+                                triggerBiometric { isUnlocked = true }
+                            },
                             onForgotPasscode = {
                                 securityManager.disableLock()
                                 isPasscodeEnabled = false
-                                viewModel.resetToSampleData()
+                                viewModel.resetSettingsToDefaults()
                                 isUnlocked = true
                             }
                         )
@@ -186,7 +210,10 @@ class MainActivity : FragmentActivity() {
                                 },
                                 actions = {
                                     IconButton(
-                                        onClick = { viewModel.togglePrivacyMode() },
+                                        onClick = {
+                                            soundHapticHelper.tap()
+                                            requestUnhidePrivacy()
+                                        },
                                         modifier = Modifier.testTag("privacy_mode_toggle_button")
                                     ) {
                                         Icon(
@@ -197,7 +224,10 @@ class MainActivity : FragmentActivity() {
                                     }
 
                                     IconButton(
-                                        onClick = { showCashSimulator = true },
+                                        onClick = {
+                                            soundHapticHelper.tap()
+                                            showCashSimulator = true
+                                        },
                                         modifier = Modifier.testTag("cash_simulator_button")
                                     ) {
                                         Icon(
@@ -208,7 +238,10 @@ class MainActivity : FragmentActivity() {
                                     }
 
                                     IconButton(
-                                        onClick = { showBackupRestoreDialog = true },
+                                        onClick = {
+                                            soundHapticHelper.tap()
+                                            showBackupRestoreDialog = true
+                                        },
                                         modifier = Modifier.testTag("topbar_backup_button")
                                     ) {
                                         Icon(
@@ -219,7 +252,10 @@ class MainActivity : FragmentActivity() {
                                     }
 
                                     IconButton(
-                                        onClick = { showSettingsDialog = true },
+                                        onClick = {
+                                            soundHapticHelper.tap()
+                                            showSettingsDialog = true
+                                        },
                                         modifier = Modifier.testTag("settings_button")
                                     ) {
                                         Icon(
@@ -238,6 +274,7 @@ class MainActivity : FragmentActivity() {
                             if (currentTab == NavigationTab.ASSETS) {
                                 FloatingActionButton(
                                     onClick = {
+                                        soundHapticHelper.tap()
                                         editingAsset = null
                                         showAddEditAssetDialog = true
                                     },
@@ -262,7 +299,10 @@ class MainActivity : FragmentActivity() {
                                     val title = tab.getTitle(strings)
                                     NavigationBarItem(
                                         selected = isSelected,
-                                        onClick = { currentTab = tab },
+                                        onClick = {
+                                            soundHapticHelper.tap()
+                                            currentTab = tab
+                                        },
                                         icon = {
                                             Icon(
                                                 imageVector = tab.icon,
@@ -296,6 +336,12 @@ class MainActivity : FragmentActivity() {
                                 NavigationTab.DASHBOARD -> {
                                     DashboardScreen(
                                         summary = summary,
+                                        portfolios = allPortfolios,
+                                        activePortfolioId = currentPortfolio?.id ?: 1,
+                                        onSelectPortfolio = { viewModel.selectPortfolio(it) },
+                                        onCreatePortfolio = { name, desc, icon, color -> viewModel.addPortfolio(name, desc, color) },
+                                        onEditPortfolio = { id, name, desc -> viewModel.updatePortfolio(id, name, desc) },
+                                        onDeletePortfolio = { viewModel.deletePortfolio(it) },
                                         strings = strings,
                                         currency = currency,
                                         usePersianDigits = usePersianDigits,
@@ -309,7 +355,7 @@ class MainActivity : FragmentActivity() {
                                             showQuickUpdateDialog = true
                                         },
                                         isPrivacyMode = isPrivacyMode,
-                                        onTogglePrivacyMode = { viewModel.togglePrivacyMode() }
+                                        onTogglePrivacyMode = { requestUnhidePrivacy() }
                                     )
                                 }
 
@@ -411,8 +457,9 @@ class MainActivity : FragmentActivity() {
                             existingAssets = allAssets,
                             currency = currency,
                             usePersianDigits = usePersianDigits,
+                            strings = strings,
                             onDismiss = { showAddEditAssetDialog = false },
-                            onSave = { name, symbol, categoryId, quantity, unitPrice, targetWeight, notes ->
+                            onSave = { name, symbol, categoryId, quantity, unitPrice, targetWeight, isFrozen, frozenPercentage, notes ->
                                 if (editingAsset != null) {
                                     viewModel.updateAsset(
                                         id = editingAsset!!.asset.id,
@@ -422,6 +469,8 @@ class MainActivity : FragmentActivity() {
                                         quantity = quantity,
                                         unitPrice = unitPrice,
                                         targetWeight = targetWeight,
+                                        isFrozen = isFrozen,
+                                        frozenPercentage = frozenPercentage,
                                         notes = notes
                                     )
                                 } else {
@@ -432,6 +481,8 @@ class MainActivity : FragmentActivity() {
                                         quantity = quantity,
                                         unitPrice = unitPrice,
                                         targetWeight = targetWeight,
+                                        isFrozen = isFrozen,
+                                        frozenPercentage = frozenPercentage,
                                         notes = notes
                                     )
                                 }
@@ -449,6 +500,7 @@ class MainActivity : FragmentActivity() {
                             item = quickUpdateTarget!!,
                             currency = currency,
                             usePersianDigits = usePersianDigits,
+                            strings = strings,
                             onDismiss = {
                                 showQuickUpdateDialog = false
                                 quickUpdateTarget = null
@@ -466,6 +518,7 @@ class MainActivity : FragmentActivity() {
                         CashInjectionModal(
                             currency = currency,
                             usePersianDigits = usePersianDigits,
+                            strings = strings,
                             onDismiss = { showCashSimulator = false },
                             onSimulate = { amount -> viewModel.simulateCashInjection(amount) },
                             onApply = { injections -> viewModel.applyCashInjection(injections) }
@@ -477,15 +530,15 @@ class MainActivity : FragmentActivity() {
                         SettingsDialog(
                             strings = strings,
                             appLanguage = appLanguage,
-                            onLanguageChange = { viewModel.appLanguage.value = it },
+                            onLanguageChange = { viewModel.setLanguage(it) },
                             themeMode = themeMode,
-                            onThemeModeChange = { viewModel.themeMode.value = it },
+                            onThemeModeChange = { viewModel.setThemeMode(it) },
                             currentCurrency = currency,
-                            onCurrencyChange = { viewModel.currency.value = it },
+                            onCurrencyChange = { viewModel.setCurrency(it) },
                             usePersianDigits = usePersianDigits,
-                            onPersianDigitsChange = { viewModel.usePersianDigits.value = it },
+                            onPersianDigitsChange = { viewModel.setUsePersianDigits(it) },
                             tolerancePercent = tolerancePercent,
-                            onToleranceChange = { viewModel.tolerancePercent.value = it },
+                            onToleranceChange = { viewModel.setTolerance(it) },
                             isPasscodeEnabled = isPasscodeEnabled,
                             onPasscodeToggle = { enable ->
                                 if (!enable) {
@@ -505,8 +558,8 @@ class MainActivity : FragmentActivity() {
                             isHapticEnabled = isHapticEnabled,
                             onHapticToggle = { soundHapticHelper.setHapticEnabled(it) },
                             onOpenBackupRestore = { showBackupRestoreDialog = true },
-                            onResetSampleData = {
-                                viewModel.resetToSampleData()
+                            onResetSettings = {
+                                viewModel.resetSettingsToDefaults()
                                 soundHapticHelper.warningAction()
                             },
                             onDismiss = { showSettingsDialog = false }
@@ -527,6 +580,32 @@ class MainActivity : FragmentActivity() {
                         )
                     }
 
+                    // Unlock Privacy Mode Passcode Dialog
+                    if (showUnlockPrivacyDialog) {
+                        PasscodeUnlockDialog(
+                            title = strings.unhideSecurityTitle,
+                            subtitle = strings.unhideSecuritySubtitle,
+                            strings = strings,
+                            usePersianDigits = usePersianDigits,
+                            isBiometricAvailable = securityManager.isBiometricAvailable() && isBiometricEnabled,
+                            onVerifyPin = { pin ->
+                                val ok = securityManager.verifyPin(pin)
+                                if (ok) {
+                                    viewModel.setPrivacyMode(false)
+                                    showUnlockPrivacyDialog = false
+                                }
+                                ok
+                            },
+                            onBiometricClick = {
+                                triggerBiometric {
+                                    viewModel.setPrivacyMode(false)
+                                    showUnlockPrivacyDialog = false
+                                }
+                            },
+                            onDismiss = { showUnlockPrivacyDialog = false }
+                        )
+                    }
+
                     // Backup & Restore Dialog
                     if (showBackupRestoreDialog) {
                         BackupRestoreDialog(
@@ -534,6 +613,7 @@ class MainActivity : FragmentActivity() {
                             categories = allCategories,
                             assets = allAssets,
                             snapshots = snapshots,
+                            portfolios = allPortfolios,
                             currency = currency,
                             tolerancePercent = tolerancePercent,
                             onRestoreData = { payload ->
@@ -574,6 +654,7 @@ class MainActivity : FragmentActivity() {
                             confirmButton = {
                                 Button(
                                     onClick = {
+                                        soundHapticHelper.deleteAction()
                                         viewModel.deleteAsset(assetToDelete!!.asset)
                                         assetToDelete = null
                                     },
@@ -583,7 +664,10 @@ class MainActivity : FragmentActivity() {
                                 }
                             },
                             dismissButton = {
-                                TextButton(onClick = { assetToDelete = null }) {
+                                TextButton(onClick = {
+                                    soundHapticHelper.tap()
+                                    assetToDelete = null
+                                }) {
                                     Text(strings.cancel)
                                 }
                             }

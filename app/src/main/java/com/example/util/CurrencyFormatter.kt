@@ -8,8 +8,6 @@ import java.util.Locale
 object CurrencyFormatter {
 
     private val numberFormat = DecimalFormat("#,##0")
-    private val decimalFormat = DecimalFormat("#,##0.00")
-    private val cryptoFormat = DecimalFormat("#,##0.000000")
     private val percentFormat = DecimalFormat("0.0")
 
     fun formatCurrency(
@@ -25,26 +23,46 @@ object CurrencyFormatter {
         }
         val rounded = Math.round(amount)
         val formatted = numberFormat.format(rounded)
-        val result = "$formatted $currency"
+        val result = if (currency.isNotBlank()) "$formatted $currency" else formatted
         return if (usePersianDigits) toPersianDigits(result) else result
+    }
+
+    fun formatSmartFloat(value: Double): String {
+        if (value == 0.0) return "0"
+        val sign = if (value < 0) "-" else ""
+        val absVal = Math.abs(value)
+        val integerPart = absVal.toLong()
+        val fraction = absVal - integerPart
+
+        if (fraction == 0.0) {
+            return sign + numberFormat.format(integerPart)
+        }
+
+        if (integerPart > 0) {
+            val df = DecimalFormat("#,##0.###")
+            return sign + df.format(absVal)
+        }
+
+        // For fractional values < 1 (e.g., 0.00045678):
+        // Count leading zeroes after decimal point and show 3 significant digits
+        val rawStr = String.format(Locale.US, "%.10f", fraction)
+        val afterDot = if (rawStr.contains('.')) rawStr.substringAfter('.') else ""
+        var leadingZeros = 0
+        while (leadingZeros < afterDot.length && afterDot[leadingZeros] == '0') {
+            leadingZeros++
+        }
+
+        if (leadingZeros >= afterDot.length) return "0"
+
+        val decimalsToShow = Math.min(10, leadingZeros + 3)
+        val pattern = "0." + "#".repeat(decimalsToShow)
+        val df = DecimalFormat(pattern)
+        return sign + df.format(absVal)
     }
 
     fun formatNumber(value: Double, usePersianDigits: Boolean = false, isHidden: Boolean = false): String {
         if (isHidden) return "••••••"
-        val formatted = if (value == 0.0) {
-            "0"
-        } else if (value % 1.0 == 0.0) {
-            numberFormat.format(value)
-        } else if (value < 0.0001) {
-            // For tiny numbers e.g. 0.0000222, format up to 10 decimal digits without scientific notation
-            val df = DecimalFormat("#,##0.##########")
-            df.format(value)
-        } else if (value < 0.01) {
-            val df = DecimalFormat("#,##0.######")
-            df.format(value)
-        } else {
-            decimalFormat.format(value)
-        }
+        val formatted = formatSmartFloat(value)
         return if (usePersianDigits) toPersianDigits(formatted) else formatted
     }
 
@@ -59,15 +77,7 @@ object CurrencyFormatter {
             val withUnit = if (symbol.isNotBlank()) "$placeholder $symbol" else placeholder
             return if (usePersianDigits) toPersianDigits(withUnit) else withUnit
         }
-        val formatted = if (value == 0.0) {
-            "0"
-        } else if (value % 1.0 == 0.0) {
-            numberFormat.format(value)
-        } else {
-            // Output high precision floating point format up to 10 decimal places, stripping trailing zeros
-            val df = DecimalFormat("#,##0.##########")
-            df.format(value)
-        }
+        val formatted = formatSmartFloat(value)
         val withUnit = if (symbol.isNotBlank()) "$formatted $symbol" else formatted
         return if (usePersianDigits) toPersianDigits(withUnit) else withUnit
     }

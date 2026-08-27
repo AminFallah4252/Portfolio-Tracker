@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -24,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,6 +33,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.data.model.AssetCategory
 import com.example.util.CurrencyFormatter
+import com.example.util.LocalSoundHaptic
 import com.example.util.Strings
 
 val AVAILABLE_CATEGORY_ICONS = listOf(
@@ -41,6 +44,7 @@ val AVAILABLE_CATEGORY_ICONS = listOf(
     "currency_bitcoin" to Icons.Default.CurrencyBitcoin,
     "account_balance" to Icons.Default.AccountBalance,
     "business" to Icons.Default.Business,
+    "home" to Icons.Default.Home,
     "diamond" to Icons.Default.Diamond,
     "category" to Icons.Default.Category,
     "pie_chart" to Icons.Default.PieChart
@@ -49,13 +53,13 @@ val AVAILABLE_CATEGORY_ICONS = listOf(
 fun getCategoryIconVector(iconName: String): ImageVector {
     return AVAILABLE_CATEGORY_ICONS.find { it.first.equals(iconName, ignoreCase = true) }?.second
         ?: when (iconName.lowercase()) {
-            "savings", "monetization_on" -> Icons.Default.Savings
+            "savings", "monetization_on", "gold" -> Icons.Default.Savings
             "stock", "stocks" -> Icons.Default.TrendingUp
-            "security", "fixed" -> Icons.Default.Shield
-            "fx", "forex", "dollar" -> Icons.Default.CurrencyExchange
-            "crypto", "bitcoin" -> Icons.Default.CurrencyBitcoin
-            "bank", "fiat" -> Icons.Default.AccountBalance
-            "real_estate", "apartment" -> Icons.Default.Business
+            "security", "fixed", "shield" -> Icons.Default.Shield
+            "fx", "forex", "dollar", "currency_exchange" -> Icons.Default.CurrencyExchange
+            "crypto", "bitcoin", "currency_bitcoin" -> Icons.Default.CurrencyBitcoin
+            "bank", "fiat", "account_balance" -> Icons.Default.AccountBalance
+            "home", "real_estate", "apartment" -> Icons.Default.Home
             else -> Icons.Default.Category
         }
 }
@@ -65,7 +69,7 @@ fun getCategoryIconVector(iconName: String): ImageVector {
 fun AddEditCategoryDialog(
     initialCategory: AssetCategory? = null,
     strings: Strings,
-    usePersianDigits: Boolean = true,
+    usePersianDigits: Boolean = false,
     onDismiss: () -> Unit,
     onSave: (
         name: String,
@@ -78,6 +82,7 @@ fun AddEditCategoryDialog(
         description: String
     ) -> Unit
 ) {
+    val soundHaptic = LocalSoundHaptic.current
     var selectedTab by remember { mutableStateOf(0) } // 0: General, 1: Allocation & Policy
 
     var name by remember { mutableStateOf(initialCategory?.name ?: "") }
@@ -85,10 +90,15 @@ fun AddEditCategoryDialog(
     var selectedIconName by remember { mutableStateOf(initialCategory?.iconName ?: "category") }
     var description by remember { mutableStateOf(initialCategory?.description ?: "") }
 
-    var targetWeight by remember { mutableStateOf(initialCategory?.targetWeight ?: 15.0) }
-    var minWeight by remember { mutableStateOf(initialCategory?.minWeight ?: 5.0) }
-    var maxWeight by remember { mutableStateOf(initialCategory?.maxWeight ?: 35.0) }
-    var targetTolerance by remember { mutableStateOf(initialCategory?.targetTolerance ?: 0.0) }
+    var targetWeightStr by remember { mutableStateOf(initialCategory?.targetWeight?.let { CurrencyFormatter.formatSmartFloat(it) } ?: "15.0") }
+    var minWeightStr by remember { mutableStateOf(initialCategory?.minWeight?.let { CurrencyFormatter.formatSmartFloat(it) } ?: "5.0") }
+    var maxWeightStr by remember { mutableStateOf(initialCategory?.maxWeight?.let { CurrencyFormatter.formatSmartFloat(it) } ?: "35.0") }
+    var targetToleranceStr by remember { mutableStateOf(initialCategory?.targetTolerance?.let { CurrencyFormatter.formatSmartFloat(it) } ?: "0.0") }
+
+    val targetWeight = targetWeightStr.toDoubleOrNull() ?: 0.0
+    val minWeight = minWeightStr.toDoubleOrNull() ?: 0.0
+    val maxWeight = maxWeightStr.toDoubleOrNull() ?: 100.0
+    val targetTolerance = targetToleranceStr.toDoubleOrNull() ?: 0.0
 
     val presetColors = listOf(
         "#F59E0B", "#3B82F6", "#8B5CF6", "#10B981", "#64748B",
@@ -103,7 +113,7 @@ fun AddEditCategoryDialog(
         Surface(
             modifier = Modifier
                 .fillMaxWidth(0.94f)
-                .fillMaxHeight(0.9f)
+                .fillMaxHeight(0.92f)
                 .clip(RoundedCornerShape(24.dp)),
             color = MaterialTheme.colorScheme.surface,
             tonalElevation = 6.dp
@@ -159,7 +169,10 @@ fun AddEditCategoryDialog(
                             )
                         }
                     }
-                    IconButton(onClick = onDismiss) {
+                    IconButton(onClick = {
+                        soundHaptic.tap()
+                        onDismiss()
+                    }) {
                         Icon(Icons.Default.Close, contentDescription = strings.close)
                     }
                 }
@@ -175,13 +188,19 @@ fun AddEditCategoryDialog(
                 ) {
                     Tab(
                         selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
+                        onClick = {
+                            soundHaptic.tap()
+                            selectedTab = 0
+                        },
                         text = { Text(strings.classGeneralTab, fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal) },
                         icon = { Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(18.dp)) }
                     )
                     Tab(
                         selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
+                        onClick = {
+                            soundHaptic.tap()
+                            selectedTab = 1
+                        },
                         text = { Text(strings.classAllocationTab, fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal) },
                         icon = { Icon(Icons.Default.PieChart, contentDescription = null, modifier = Modifier.size(18.dp)) }
                     )
@@ -202,7 +221,7 @@ fun AddEditCategoryDialog(
                             value = name,
                             onValueChange = { name = it },
                             label = { Text(strings.categoryName + " *") },
-                            placeholder = { Text("مثال: طلا و فلزات، سهام، درآمد ثابت") },
+                            placeholder = { Text("طلا، بورس، نقدینگی، املاک...") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             shape = RoundedCornerShape(12.dp)
@@ -239,7 +258,10 @@ fun AddEditCategoryDialog(
                                             .size(38.dp)
                                             .clip(CircleShape)
                                             .background(color)
-                                            .clickable { selectedColorHex = hex }
+                                            .clickable {
+                                                soundHaptic.tap()
+                                                selectedColorHex = hex
+                                            }
                                             .then(
                                                 if (isSelected) Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
                                                 else Modifier
@@ -289,7 +311,10 @@ fun AddEditCategoryDialog(
                                         modifier = Modifier
                                             .height(54.dp)
                                             .clip(RoundedCornerShape(12.dp))
-                                            .clickable { selectedIconName = iconKey }
+                                            .clickable {
+                                                soundHaptic.tap()
+                                                selectedIconName = iconKey
+                                            }
                                     ) {
                                         Box(
                                             contentAlignment = Alignment.Center,
@@ -343,11 +368,48 @@ fun AddEditCategoryDialog(
 
                                 Slider(
                                     value = targetWeight.toFloat().coerceIn(0f, 100f),
-                                    onValueChange = { targetWeight = Math.round(it * 10.0) / 10.0 },
+                                    onValueChange = { targetWeightStr = (Math.round(it * 10.0) / 10.0).toString() },
                                     valueRange = 0f..100f,
                                     steps = 199,
                                     modifier = Modifier.fillMaxWidth()
                                 )
+
+                                // Direct Text Input + Step buttons
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    OutlinedButton(
+                                        onClick = {
+                                            soundHaptic.tap()
+                                            targetWeightStr = Math.max(0.0, targetWeight - 1.0).toString()
+                                        },
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Icon(Icons.Default.Remove, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Text("1%")
+                                    }
+                                    OutlinedTextField(
+                                        value = targetWeightStr,
+                                        onValueChange = { targetWeightStr = it },
+                                        label = { Text(strings.manualEditValue) },
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                        modifier = Modifier.weight(1f),
+                                        singleLine = true,
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    OutlinedButton(
+                                        onClick = {
+                                            soundHaptic.tap()
+                                            targetWeightStr = Math.min(100.0, targetWeight + 1.0).toString()
+                                        },
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Text("1%")
+                                    }
+                                }
 
                                 // Preset Chips
                                 Row(
@@ -356,10 +418,13 @@ fun AddEditCategoryDialog(
                                         .horizontalScroll(rememberScrollState()),
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    listOf(5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 40.0, 50.0).forEach { preset ->
+                                    listOf(0.0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 40.0, 50.0).forEach { preset ->
                                         FilterChip(
                                             selected = Math.abs(targetWeight - preset) < 0.1,
-                                            onClick = { targetWeight = preset },
+                                            onClick = {
+                                                soundHaptic.tap()
+                                                targetWeightStr = preset.toString()
+                                            },
                                             label = { Text("${preset.toInt()}%", fontSize = 11.sp, maxLines = 1) }
                                         )
                                     }
@@ -397,7 +462,7 @@ fun AddEditCategoryDialog(
                                 }
                                 Slider(
                                     value = minWeight.toFloat().coerceIn(0f, maxWeight.toFloat()),
-                                    onValueChange = { minWeight = Math.round(it * 10.0) / 10.0 },
+                                    onValueChange = { minWeightStr = (Math.round(it * 10.0) / 10.0).toString() },
                                     valueRange = 0f..100f
                                 )
 
@@ -417,7 +482,7 @@ fun AddEditCategoryDialog(
                                 }
                                 Slider(
                                     value = maxWeight.toFloat().coerceIn(minWeight.toFloat(), 100f),
-                                    onValueChange = { maxWeight = Math.round(it * 10.0) / 10.0 },
+                                    onValueChange = { maxWeightStr = (Math.round(it * 10.0) / 10.0).toString() },
                                     valueRange = 0f..100f
                                 )
                             }
@@ -457,7 +522,7 @@ fun AddEditCategoryDialog(
                                 }
                                 Slider(
                                     value = targetTolerance.toFloat().coerceIn(0f, 5f),
-                                    onValueChange = { targetTolerance = Math.round(it * 10.0) / 10.0 },
+                                    onValueChange = { targetToleranceStr = (Math.round(it * 10.0) / 10.0).toString() },
                                     valueRange = 0f..5f,
                                     steps = 10
                                 )
@@ -474,7 +539,10 @@ fun AddEditCategoryDialog(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     OutlinedButton(
-                        onClick = onDismiss,
+                        onClick = {
+                            soundHaptic.tap()
+                            onDismiss()
+                        },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -484,6 +552,7 @@ fun AddEditCategoryDialog(
                     Button(
                         onClick = {
                             if (name.isNotBlank()) {
+                                soundHaptic.successAction()
                                 onSave(
                                     name.trim(),
                                     selectedColorHex,

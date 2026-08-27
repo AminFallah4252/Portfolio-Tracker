@@ -1,10 +1,16 @@
 package com.example.ui.components
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AcUnit
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
@@ -15,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -24,18 +31,24 @@ import com.example.data.model.RebalanceActionType
 import com.example.ui.theme.ActionBuyGreen
 import com.example.ui.theme.ActionSellRed
 import com.example.util.CurrencyFormatter
+import com.example.util.LocalSoundHaptic
+import com.example.util.Strings
 
 @Composable
 fun AssetItemCard(
     item: CalculatedAsset,
     currency: String,
     usePersianDigits: Boolean,
+    strings: Strings,
     onEdit: () -> Unit,
     onQuickUpdate: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
     isPrivacyMode: Boolean = false
 ) {
+    val context = LocalContext.current
+    val soundHaptic = LocalSoundHaptic.current
+    val clipboardManager = remember { context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager }
     var menuExpanded by remember { mutableStateOf(false) }
 
     val categoryColor = item.category?.colorHex?.let { hex ->
@@ -45,6 +58,14 @@ fun AssetItemCard(
             MaterialTheme.colorScheme.primary
         }
     } ?: MaterialTheme.colorScheme.primary
+
+    val isFrozen = item.asset.isFrozen
+
+    val copyToClipboard: (String, String) -> Unit = { text, label ->
+        clipboardManager?.setPrimaryClip(ClipData.newPlainText(label, text))
+        soundHaptic.tap()
+        Toast.makeText(context, strings.copiedToClipboard(text), Toast.LENGTH_SHORT).show()
+    }
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -67,7 +88,7 @@ fun AssetItemCard(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(38.dp)
                             .clip(RoundedCornerShape(10.dp))
                             .background(categoryColor.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
@@ -107,6 +128,33 @@ fun AssetItemCard(
                                     )
                                 }
                             }
+                            if (isFrozen) {
+                                val frozenPercent = item.asset.effectiveFrozenPercent
+                                val isFully = item.asset.isFullyFrozen
+                                Surface(
+                                    color = Color(0xFFE0F2FE),
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.AcUnit,
+                                            contentDescription = null,
+                                            tint = Color(0xFF0369A1),
+                                            modifier = Modifier.size(11.dp)
+                                        )
+                                        Text(
+                                            text = if (isFully) strings.frozenAssetBadge else "${strings.frozenAssetBadge} (${CurrencyFormatter.formatSmartFloat(frozenPercent)}%)",
+                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                            color = Color(0xFF0369A1),
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
                         }
 
                         if (item.category != null) {
@@ -122,7 +170,10 @@ fun AssetItemCard(
                 }
 
                 Box {
-                    IconButton(onClick = { menuExpanded = true }) {
+                    IconButton(onClick = {
+                        soundHaptic.tap()
+                        menuExpanded = true
+                    }) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = "Options",
@@ -135,16 +186,18 @@ fun AssetItemCard(
                         onDismissRequest = { menuExpanded = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("ویرایش سریع قیمت و تعداد") },
+                            text = { Text(strings.quickUpdate) },
                             onClick = {
+                                soundHaptic.tap()
                                 menuExpanded = false
                                 onQuickUpdate()
                             },
                             leadingIcon = { Icon(Icons.Default.SwapVert, contentDescription = null) }
                         )
                         DropdownMenuItem(
-                            text = { Text("ویرایش کامل دارایی") },
+                            text = { Text(strings.editAsset) },
                             onClick = {
+                                soundHaptic.tap()
                                 menuExpanded = false
                                 onEdit()
                             },
@@ -152,8 +205,9 @@ fun AssetItemCard(
                         )
                         HorizontalDivider()
                         DropdownMenuItem(
-                            text = { Text("حذف دارایی", color = MaterialTheme.colorScheme.error) },
+                            text = { Text(strings.delete, color = MaterialTheme.colorScheme.error) },
                             onClick = {
+                                soundHaptic.deleteAction()
                                 menuExpanded = false
                                 onDelete()
                             },
@@ -177,9 +231,18 @@ fun AssetItemCard(
                         .padding(12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(6.dp))
+                            .clickable {
+                                if (!isPrivacyMode) {
+                                    copyToClipboard(CurrencyFormatter.formatSmartFloat(item.asset.quantity), strings.quantity)
+                                }
+                            }
+                    ) {
                         Text(
-                            text = "موجودی / تعداد",
+                            text = strings.quantity,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
@@ -197,10 +260,17 @@ fun AssetItemCard(
 
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(6.dp))
+                            .clickable {
+                                if (!isPrivacyMode) {
+                                    copyToClipboard(Math.round(item.asset.unitPrice).toString(), strings.unitPrice)
+                                }
+                            }
                     ) {
                         Text(
-                            text = "قیمت واحد",
+                            text = strings.unitPrice,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
@@ -218,10 +288,17 @@ fun AssetItemCard(
 
                     Column(
                         horizontalAlignment = Alignment.End,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1.1f)
+                            .clip(RoundedCornerShape(6.dp))
+                            .clickable {
+                                if (!isPrivacyMode) {
+                                    copyToClipboard(Math.round(item.currentValue).toString(), strings.totalValue)
+                                }
+                            }
                     ) {
                         Text(
-                            text = "ارزش کل فعلی",
+                            text = strings.totalValue,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
@@ -254,7 +331,7 @@ fun AssetItemCard(
                     modifier = Modifier.weight(1f, fill = false)
                 ) {
                     Text(
-                        text = "وزن فعلی: ${CurrencyFormatter.formatPercent(item.currentWeight, usePersianDigits)}",
+                        text = "${strings.currentWeight}: ${CurrencyFormatter.formatPercent(item.currentWeight, usePersianDigits)}",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -267,10 +344,14 @@ fun AssetItemCard(
                         color = MaterialTheme.colorScheme.outline
                     )
                     Text(
-                        text = "وزن هدف: ${CurrencyFormatter.formatPercent(item.asset.targetWeight, usePersianDigits)}",
+                        text = when {
+                            item.asset.isFullyFrozen -> "${strings.targetWeight}: ۰.۰٪ (${strings.actionFrozen})"
+                            item.asset.isPartiallyFrozen -> "${strings.targetWeight}: ${CurrencyFormatter.formatPercent(item.asset.targetWeight, usePersianDigits)} (${strings.releasedPortion})"
+                            else -> "${strings.targetWeight}: ${CurrencyFormatter.formatPercent(item.asset.targetWeight, usePersianDigits)}"
+                        },
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = if (item.asset.isFullyFrozen) Color(0xFF0369A1) else MaterialTheme.colorScheme.primary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -279,10 +360,12 @@ fun AssetItemCard(
                 Spacer(modifier = Modifier.width(6.dp))
 
                 // Status Pill
-                val (pillBg, pillText, pillColor) = when (item.actionType) {
-                    RebalanceActionType.BUY -> Triple(com.example.ui.theme.ActionBuyContainer, "کسری (خرید)", ActionBuyGreen)
-                    RebalanceActionType.SELL -> Triple(com.example.ui.theme.ActionSellContainer, "مازاد (فروش)", ActionSellRed)
-                    RebalanceActionType.BALANCED -> Triple(MaterialTheme.colorScheme.surfaceVariant, "متعادل", MaterialTheme.colorScheme.onSurfaceVariant)
+                val (pillBg, pillText, pillColor) = when {
+                    item.asset.isFullyFrozen -> Triple(Color(0xFFE0F2FE), strings.actionFrozenLabel, Color(0xFF0369A1))
+                    item.actionType == RebalanceActionType.BUY -> Triple(com.example.ui.theme.ActionBuyContainer, strings.actionBuyLabel, ActionBuyGreen)
+                    item.actionType == RebalanceActionType.SELL -> Triple(com.example.ui.theme.ActionSellContainer, strings.actionSellLabel, ActionSellRed)
+                    item.actionType == RebalanceActionType.FROZEN -> Triple(Color(0xFFE0F2FE), strings.actionFrozenLabel, Color(0xFF0369A1))
+                    else -> Triple(MaterialTheme.colorScheme.surfaceVariant, strings.actionBalancedLabel, MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Surface(
                     color = pillBg,

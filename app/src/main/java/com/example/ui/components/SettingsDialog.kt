@@ -3,33 +3,23 @@ package com.example.ui.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Backup
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.Fingerprint
-import androidx.compose.material.icons.filled.Key
-import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.RestartAlt
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.SettingsBrightness
-import androidx.compose.material.icons.filled.Upload
-import androidx.compose.material.icons.filled.Vibration
-import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.util.AppLanguage
 import com.example.util.AppThemeMode
 import com.example.util.CurrencyFormatter
+import com.example.util.LocalSoundHaptic
 import com.example.util.Strings
 
 @Composable
@@ -56,9 +46,10 @@ fun SettingsDialog(
     isHapticEnabled: Boolean,
     onHapticToggle: (Boolean) -> Unit,
     onOpenBackupRestore: () -> Unit,
-    onResetSampleData: () -> Unit,
+    onResetSettings: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val soundHaptic = LocalSoundHaptic.current
     var showResetConfirm by remember { mutableStateOf(false) }
 
     Dialog(onDismissRequest = onDismiss) {
@@ -85,7 +76,10 @@ fun SettingsDialog(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    IconButton(onClick = onDismiss) {
+                    IconButton(onClick = {
+                        soundHaptic.tap()
+                        onDismiss()
+                    }) {
                         Icon(Icons.Default.Close, contentDescription = strings.close)
                     }
                 }
@@ -143,6 +137,7 @@ fun SettingsDialog(
                             Switch(
                                 checked = isPasscodeEnabled,
                                 onCheckedChange = { enable ->
+                                    soundHaptic.tap()
                                     if (enable) {
                                         onOpenSetPasscode()
                                     } else {
@@ -156,7 +151,10 @@ fun SettingsDialog(
                         if (isPasscodeEnabled) {
                             // Change PIN button
                             OutlinedButton(
-                                onClick = onOpenSetPasscode,
+                                onClick = {
+                                    soundHaptic.tap()
+                                    onOpenSetPasscode()
+                                },
                                 shape = RoundedCornerShape(10.dp),
                                 modifier = Modifier.fillMaxWidth().testTag("button_change_pin")
                             ) {
@@ -186,7 +184,10 @@ fun SettingsDialog(
                                     }
                                     Switch(
                                         checked = isBiometricEnabled,
-                                        onCheckedChange = onBiometricToggle,
+                                        onCheckedChange = {
+                                            soundHaptic.tap()
+                                            onBiometricToggle(it)
+                                        },
                                         modifier = Modifier.testTag("switch_biometric_unlock")
                                     )
                                 }
@@ -226,19 +227,22 @@ fun SettingsDialog(
                         }
 
                         Text(
-                            text = "پشتیبان‌گیری از کلیه دارایی‌ها و بازگردانی سریع فایل‌های JSON",
+                            text = strings.backupRestoreDesc,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
                         FilledTonalButton(
-                            onClick = onOpenBackupRestore,
+                            onClick = {
+                                soundHaptic.tap()
+                                onOpenBackupRestore()
+                            },
                             shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.fillMaxWidth().testTag("button_open_backup_restore")
                         ) {
                             Icon(Icons.Default.Upload, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("خروجی و بارگذاری اطلاعات (Import / Export)", style = MaterialTheme.typography.labelMedium)
+                            Text(strings.backupRestoreAction, style = MaterialTheme.typography.labelMedium)
                         }
                     }
                 }
@@ -293,7 +297,10 @@ fun SettingsDialog(
                             }
                             Switch(
                                 checked = isSoundEnabled,
-                                onCheckedChange = onSoundToggle,
+                                onCheckedChange = {
+                                    soundHaptic.tap()
+                                    onSoundToggle(it)
+                                },
                                 modifier = Modifier.testTag("switch_sound_effects")
                             )
                         }
@@ -318,7 +325,10 @@ fun SettingsDialog(
                             }
                             Switch(
                                 checked = isHapticEnabled,
-                                onCheckedChange = onHapticToggle,
+                                onCheckedChange = {
+                                    soundHaptic.tap()
+                                    onHapticToggle(it)
+                                },
                                 modifier = Modifier.testTag("switch_haptic_feedback")
                             )
                         }
@@ -338,14 +348,20 @@ fun SettingsDialog(
                     ) {
                         FilterChip(
                             selected = appLanguage == AppLanguage.PERSIAN,
-                            onClick = { onLanguageChange(AppLanguage.PERSIAN) },
+                            onClick = {
+                                soundHaptic.tap()
+                                onLanguageChange(AppLanguage.PERSIAN)
+                            },
                             label = { Text("فارسی (Persian)") },
                             leadingIcon = { Icon(Icons.Default.Language, contentDescription = null, modifier = Modifier.size(16.dp)) },
                             modifier = Modifier.weight(1f).testTag("lang_persian")
                         )
                         FilterChip(
                             selected = appLanguage == AppLanguage.ENGLISH,
-                            onClick = { onLanguageChange(AppLanguage.ENGLISH) },
+                            onClick = {
+                                soundHaptic.tap()
+                                onLanguageChange(AppLanguage.ENGLISH)
+                            },
                             label = { Text("English") },
                             leadingIcon = { Icon(Icons.Default.Language, contentDescription = null, modifier = Modifier.size(16.dp)) },
                             modifier = Modifier.weight(1f).testTag("lang_english")
@@ -366,22 +382,31 @@ fun SettingsDialog(
                     ) {
                         FilterChip(
                             selected = themeMode == AppThemeMode.SYSTEM,
-                            onClick = { onThemeModeChange(AppThemeMode.SYSTEM) },
-                            label = { Text("سیستم") },
+                            onClick = {
+                                soundHaptic.tap()
+                                onThemeModeChange(AppThemeMode.SYSTEM)
+                            },
+                            label = { Text(strings.themeSystem) },
                             leadingIcon = { Icon(Icons.Default.SettingsBrightness, contentDescription = null, modifier = Modifier.size(14.dp)) },
                             modifier = Modifier.weight(1f)
                         )
                         FilterChip(
                             selected = themeMode == AppThemeMode.LIGHT,
-                            onClick = { onThemeModeChange(AppThemeMode.LIGHT) },
-                            label = { Text("روشن") },
+                            onClick = {
+                                soundHaptic.tap()
+                                onThemeModeChange(AppThemeMode.LIGHT)
+                            },
+                            label = { Text(strings.themeLight) },
                             leadingIcon = { Icon(Icons.Default.LightMode, contentDescription = null, modifier = Modifier.size(14.dp)) },
                             modifier = Modifier.weight(1f)
                         )
                         FilterChip(
                             selected = themeMode == AppThemeMode.DARK,
-                            onClick = { onThemeModeChange(AppThemeMode.DARK) },
-                            label = { Text("تاریک") },
+                            onClick = {
+                                soundHaptic.tap()
+                                onThemeModeChange(AppThemeMode.DARK)
+                            },
+                            label = { Text(strings.themeDark) },
                             leadingIcon = { Icon(Icons.Default.DarkMode, contentDescription = null, modifier = Modifier.size(14.dp)) },
                             modifier = Modifier.weight(1f)
                         )
@@ -402,7 +427,10 @@ fun SettingsDialog(
                         listOf("تومان", "ریال", "$", "€").forEach { curr ->
                             FilterChip(
                                 selected = currentCurrency == curr,
-                                onClick = { onCurrencyChange(curr) },
+                                onClick = {
+                                    soundHaptic.tap()
+                                    onCurrencyChange(curr)
+                                },
                                 label = { Text(curr) },
                                 modifier = Modifier.weight(1f)
                             )
@@ -430,15 +458,19 @@ fun SettingsDialog(
                     }
                     Switch(
                         checked = usePersianDigits,
-                        onCheckedChange = onPersianDigitsChange
+                        onCheckedChange = {
+                            soundHaptic.tap()
+                            onPersianDigitsChange(it)
+                        }
                     )
                 }
 
-                // Tolerance Slider
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                // Tolerance Slider + Manual Input + Step Buttons
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = strings.toleranceSetting,
@@ -457,30 +489,68 @@ fun SettingsDialog(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Slider(
-                        value = tolerancePercent.toFloat(),
-                        onValueChange = { onToleranceChange(Math.round(it * 10.0) / 10.0) },
-                        valueRange = 0.1f..3.0f,
-                        steps = 29
-                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        IconButton(
+                            onClick = {
+                                soundHaptic.tap()
+                                val newVal = (tolerancePercent - 0.1).coerceIn(0.1, 5.0)
+                                onToleranceChange(Math.round(newVal * 10.0) / 10.0)
+                            },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(Icons.Default.RemoveCircleOutline, contentDescription = "Decrease")
+                        }
+
+                        Slider(
+                            value = tolerancePercent.toFloat().coerceIn(0.1f, 5.0f),
+                            onValueChange = {
+                                onToleranceChange(Math.round(it.toDouble() * 10.0) / 10.0)
+                            },
+                            valueRange = 0.1f..5.0f,
+                            steps = 48,
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        IconButton(
+                            onClick = {
+                                soundHaptic.tap()
+                                val newVal = (tolerancePercent + 0.1).coerceIn(0.1, 5.0)
+                                onToleranceChange(Math.round(newVal * 10.0) / 10.0)
+                            },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(Icons.Default.AddCircleOutline, contentDescription = "Increase")
+                        }
+                    }
                 }
 
                 HorizontalDivider()
 
-                // Reset Sample Data
+                // Reset Settings only (NOT database)
                 OutlinedButton(
-                    onClick = { showResetConfirm = true },
+                    onClick = {
+                        soundHaptic.tap()
+                        showResetConfirm = true
+                    },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(Icons.Default.RestartAlt, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(strings.resetDataButton)
+                    Text(strings.resetSettingsButton)
                 }
 
                 Button(
-                    onClick = onDismiss,
+                    onClick = {
+                        soundHaptic.successAction()
+                        onDismiss()
+                    },
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -493,25 +563,28 @@ fun SettingsDialog(
     if (showResetConfirm) {
         AlertDialog(
             onDismissRequest = { showResetConfirm = false },
-            title = { Text(strings.resetConfirmTitle) },
-            text = { Text(strings.resetConfirmText) },
+            title = { Text(strings.resetSettingsConfirmTitle) },
+            text = { Text(strings.resetSettingsConfirmText) },
             confirmButton = {
                 Button(
                     onClick = {
-                        onResetSampleData()
+                        soundHaptic.successAction()
+                        onResetSettings()
                         showResetConfirm = false
                         onDismiss()
                     }
                 ) {
-                    Text(strings.resetConfirmAction)
+                    Text(strings.resetSettingsConfirmAction)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showResetConfirm = false }) {
+                TextButton(onClick = {
+                    soundHaptic.tap()
+                    showResetConfirm = false
+                }) {
                     Text(strings.cancel)
                 }
             }
         )
     }
 }
-

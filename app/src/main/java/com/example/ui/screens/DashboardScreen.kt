@@ -21,25 +21,36 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.CalculatedAsset
+import com.example.data.model.PortfolioProfile
 import com.example.data.model.PortfolioSummary
 import com.example.data.model.RebalanceActionType
 import com.example.ui.components.AllocationComparisonBar
 import com.example.ui.components.AllocationDonutChart
+import com.example.ui.components.PasscodeUnlockDialog
+import com.example.ui.components.PortfolioManageDialog
 import com.example.ui.components.RebalanceActionCard
 import com.example.ui.theme.ActionBuyGreen
 import com.example.ui.theme.ActionSellRed
 import com.example.util.CurrencyFormatter
+import com.example.util.LocalSoundHaptic
 import com.example.util.Strings
 
 @Composable
 fun DashboardScreen(
     summary: PortfolioSummary,
+    portfolios: List<PortfolioProfile>,
+    activePortfolioId: Int,
     strings: Strings,
     currency: String,
     usePersianDigits: Boolean,
+    onSelectPortfolio: (Int) -> Unit,
+    onCreatePortfolio: (name: String, description: String, icon: String, colorHex: String) -> Unit,
+    onEditPortfolio: (id: Int, name: String, description: String) -> Unit,
+    onDeletePortfolio: (Int) -> Unit,
     onNavigateToAssets: () -> Unit,
     onNavigateToRebalance: () -> Unit,
     onOpenCashSimulator: () -> Unit,
@@ -50,7 +61,24 @@ fun DashboardScreen(
     isPrivacyMode: Boolean = false,
     onTogglePrivacyMode: () -> Unit = {}
 ) {
+    val soundHaptic = LocalSoundHaptic.current
+    var showPortfolioDialog by remember { mutableStateOf(false) }
     var selectedChartAsset by remember { mutableStateOf<CalculatedAsset?>(null) }
+
+    val activePortfolio = portfolios.find { it.id == activePortfolioId } ?: portfolios.firstOrNull()
+
+    if (showPortfolioDialog) {
+        PortfolioManageDialog(
+            portfolios = portfolios,
+            activePortfolioId = activePortfolioId,
+            strings = strings,
+            onDismiss = { showPortfolioDialog = false },
+            onSelectPortfolio = onSelectPortfolio,
+            onCreatePortfolio = onCreatePortfolio,
+            onEditPortfolio = onEditPortfolio,
+            onDeletePortfolio = onDeletePortfolio
+        )
+    }
 
     LazyColumn(
         modifier = modifier
@@ -59,7 +87,78 @@ fun DashboardScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp),
         contentPadding = PaddingValues(top = 12.dp, bottom = 96.dp)
     ) {
-        // 1. Pragmatic Hero Portfolio Value Card
+        // 0. Multi-Portfolio Header Banner
+        item {
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable {
+                        soundHaptic.tap()
+                        showPortfolioDialog = true
+                    }
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.weight(1f, fill = false)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FolderSpecial,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Column {
+                            Text(
+                                text = activePortfolio?.name ?: strings.currentPortfolio,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            if (portfolios.size > 1) {
+                                Text(
+                                    text = "${portfolios.size} سبد فعال",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = strings.switchPortfolio,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // 1. Pragmatic Hero Total Portfolio Value & Net Worth Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -93,7 +192,10 @@ fun DashboardScreen(
                                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                             )
                             IconButton(
-                                onClick = onTogglePrivacyMode,
+                                onClick = {
+                                    soundHaptic.tap()
+                                    onTogglePrivacyMode()
+                                },
                                 modifier = Modifier
                                     .size(32.dp)
                                     .testTag("dashboard_privacy_toggle_button")
@@ -124,7 +226,9 @@ fun DashboardScreen(
                         text = CurrencyFormatter.formatCurrency(summary.totalValue, currency, usePersianDigits, isHidden = isPrivacyMode),
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
 
                     // Linear Multi-segment Asset Allocation Strip
@@ -173,7 +277,8 @@ fun DashboardScreen(
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.weight(1f, fill = false)
                         ) {
                             Icon(
                                 imageVector = if (isValid) Icons.Default.CheckCircle else Icons.Default.WarningAmber,
@@ -185,7 +290,98 @@ fun DashboardScreen(
                                 text = if (isValid) strings.targetWeightsValid else strings.targetWeightsInvalid(CurrencyFormatter.formatPercent(summary.totalTargetWeight, usePersianDigits)),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+                        if (summary.frozenAssetsCount > 0) {
+                            Surface(
+                                color = Color(0xFF0284C7).copy(alpha = 0.15f),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Icon(Icons.Default.AcUnit, contentDescription = null, tint = Color(0xFF0369A1), modifier = Modifier.size(12.dp))
+                                    Text(
+                                        text = "${summary.frozenAssetsCount} ${strings.actionFrozen}",
+                                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                        color = Color(0xFF0369A1),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Frozen Assets Banner (if any exist)
+        if (summary.frozenAssetsCount > 0) {
+            item {
+                Surface(
+                    color = Color(0xFFE0F2FE).copy(alpha = 0.55f),
+                    shape = RoundedCornerShape(16.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF0284C7).copy(alpha = 0.3f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.weight(1f, fill = false)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AcUnit,
+                                contentDescription = null,
+                                tint = Color(0xFF0284C7),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Column {
+                                Text(
+                                    text = strings.frozenPortfolioValue,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color(0xFF0369A1),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = CurrencyFormatter.formatCurrency(summary.frozenAssetsValue, currency, usePersianDigits, isHidden = isPrivacyMode),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF0369A1),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                text = strings.liquidPortfolioValue,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = CurrencyFormatter.formatCurrency(summary.liquidTotalValue, currency, usePersianDigits, isHidden = isPrivacyMode),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
@@ -203,7 +399,10 @@ fun DashboardScreen(
                 Card(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable(onClick = onNavigateToRebalance),
+                        .clickable {
+                            soundHaptic.tap()
+                            onNavigateToRebalance()
+                        },
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     shape = RoundedCornerShape(18.dp),
                     border = androidx.compose.foundation.BorderStroke(
@@ -219,18 +418,24 @@ fun DashboardScreen(
                         Text(
                             text = strings.buyNeeded,
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = CurrencyFormatter.formatCurrency(summary.totalBuyAmount, currency, usePersianDigits, isHidden = isPrivacyMode),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = ActionBuyGreen
+                            color = ActionBuyGreen,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = strings.assetsNeedBuy(summary.buyCount),
                             style = MaterialTheme.typography.labelSmall,
-                            color = ActionBuyGreen.copy(alpha = 0.8f)
+                            color = ActionBuyGreen.copy(alpha = 0.8f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
@@ -239,7 +444,10 @@ fun DashboardScreen(
                 Card(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable(onClick = onNavigateToRebalance),
+                        .clickable {
+                            soundHaptic.tap()
+                            onNavigateToRebalance()
+                        },
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     shape = RoundedCornerShape(18.dp),
                     border = androidx.compose.foundation.BorderStroke(
@@ -255,18 +463,24 @@ fun DashboardScreen(
                         Text(
                             text = strings.sellSurplus,
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = CurrencyFormatter.formatCurrency(summary.totalSellAmount, currency, usePersianDigits, isHidden = isPrivacyMode),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = ActionSellRed
+                            color = ActionSellRed,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = strings.assetsNeedSell(summary.sellCount),
                             style = MaterialTheme.typography.labelSmall,
-                            color = ActionSellRed.copy(alpha = 0.8f)
+                            color = ActionSellRed.copy(alpha = 0.8f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
@@ -280,7 +494,10 @@ fun DashboardScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 FilledTonalButton(
-                    onClick = onNavigateToRebalance,
+                    onClick = {
+                        soundHaptic.tap()
+                        onNavigateToRebalance()
+                    },
                     modifier = Modifier.weight(1.2f),
                     shape = RoundedCornerShape(14.dp),
                     contentPadding = PaddingValues(vertical = 10.dp, horizontal = 8.dp)
@@ -291,7 +508,10 @@ fun DashboardScreen(
                 }
 
                 FilledTonalButton(
-                    onClick = onOpenCashSimulator,
+                    onClick = {
+                        soundHaptic.tap()
+                        onOpenCashSimulator()
+                    },
                     modifier = Modifier.weight(1.2f),
                     shape = RoundedCornerShape(14.dp),
                     contentPadding = PaddingValues(vertical = 10.dp, horizontal = 8.dp)
@@ -302,7 +522,10 @@ fun DashboardScreen(
                 }
 
                 FilledTonalIconButton(
-                    onClick = onRecordSnapshot,
+                    onClick = {
+                        soundHaptic.successAction()
+                        onRecordSnapshot()
+                    },
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.size(42.dp)
                 ) {
@@ -330,7 +553,13 @@ fun DashboardScreen(
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
-                        TextButton(onClick = onNavigateToAssets, contentPadding = PaddingValues(0.dp)) {
+                        TextButton(
+                            onClick = {
+                                soundHaptic.tap()
+                                onNavigateToAssets()
+                            },
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
                             Text(strings.tabAssets, style = MaterialTheme.typography.labelSmall)
                         }
                     }
@@ -377,7 +606,8 @@ fun DashboardScreen(
                                         Text(
                                             text = "${catSummary.category.name}: ${CurrencyFormatter.formatPercent(catSummary.currentWeight, usePersianDigits)}",
                                             style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = FontWeight.Medium
+                                            fontWeight = FontWeight.Medium,
+                                            maxLines = 1
                                         )
                                     }
                                 }
@@ -422,7 +652,10 @@ fun DashboardScreen(
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
                         Button(
-                            onClick = onNavigateToAssets,
+                            onClick = {
+                                soundHaptic.tap()
+                                onNavigateToAssets()
+                            },
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -446,7 +679,13 @@ fun DashboardScreen(
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
-                        TextButton(onClick = onNavigateToRebalance, contentPadding = PaddingValues(0.dp)) {
+                        TextButton(
+                            onClick = {
+                                soundHaptic.tap()
+                                onNavigateToRebalance()
+                            },
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
                             Text(strings.viewFullRebalance, style = MaterialTheme.typography.labelSmall)
                         }
                     }
@@ -457,6 +696,7 @@ fun DashboardScreen(
                         item = asset,
                         currency = currency,
                         usePersianDigits = usePersianDigits,
+                        strings = strings,
                         isPrivacyMode = isPrivacyMode,
                         onQuickEdit = { onQuickEditAsset(asset) }
                     )

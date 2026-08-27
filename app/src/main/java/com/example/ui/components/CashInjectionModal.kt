@@ -32,15 +32,19 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.data.model.CashInjectionResult
 import com.example.util.CurrencyFormatter
+import com.example.util.LocalSoundHaptic
+import com.example.util.Strings
 
 @Composable
 fun CashInjectionModal(
     currency: String,
     usePersianDigits: Boolean,
+    strings: Strings,
     onDismiss: () -> Unit,
     onSimulate: (Double) -> CashInjectionResult,
-    onApply: (List<Pair<Int, Double>>) -> Unit // list of (assetId, unitsToBuy)
+    onApply: (List<Pair<Int, Double>>) -> Unit
 ) {
+    val soundHaptic = LocalSoundHaptic.current
     var cashStr by remember { mutableStateOf("10000000") } // Default 10M
     val cash = cashStr.toDoubleOrNull() ?: 0.0
 
@@ -48,7 +52,7 @@ fun CashInjectionModal(
         onSimulate(cash)
     }
 
-    // Asset selection states: assetId -> Boolean (default selected for all items with suggestion > 0 or all assets)
+    // Asset selection states: assetId -> Boolean
     var selectedAssetIds by remember(simulationResult) {
         mutableStateOf(simulationResult.simulatedAllocations.filter { it.newInvestAmount > 0 || simulationResult.simulatedAllocations.size <= 3 }.map { it.asset.id }.toSet())
     }
@@ -109,18 +113,21 @@ fun CashInjectionModal(
                             tint = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = "شبیه‌ساز و اعمال تزریق نقدینگی",
+                            text = strings.cashInjectionTitle,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                     }
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Close")
+                    IconButton(onClick = {
+                        soundHaptic.tap()
+                        onDismiss()
+                    }) {
+                        Icon(Icons.Default.Close, contentDescription = strings.close)
                     }
                 }
 
                 Text(
-                    text = "مبلغ ورودی را وارد کنید یا مبالغ تزریق به هر دارایی را شخصی‌سازی و مستقیماً روی سبد دارایی اعمال نمایید.",
+                    text = strings.cashInjectionDesc,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -133,7 +140,7 @@ fun CashInjectionModal(
                     onValueChange = {
                         cashStr = it
                     },
-                    label = { Text("مبلغ نقدینگی ورودی ($currency)") },
+                    label = { Text("${strings.cashAmount} ($currency)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -152,11 +159,12 @@ fun CashInjectionModal(
                         FilterChip(
                             selected = cash == preset,
                             onClick = {
+                                soundHaptic.tap()
                                 cashStr = preset.toLong().toString()
                             },
                             label = {
                                 Text(
-                                    if (preset >= 1_000_000) "${(preset / 1_000_000).toInt()} م" else preset.toString(),
+                                    if (preset >= 1_000_000) "${(preset / 1_000_000).toInt()} M" else preset.toString(),
                                     fontSize = 12.sp,
                                     maxLines = 1
                                 )
@@ -178,7 +186,7 @@ fun CashInjectionModal(
                     ) {
                         Column(modifier = Modifier.weight(1f, fill = false)) {
                             Text(
-                                text = "مجموع نقدینگی تخصیص‌یافته:",
+                                text = "مجموع نقدینگی ورودی:",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 maxLines = 1,
@@ -196,7 +204,7 @@ fun CashInjectionModal(
 
                         Column(horizontalAlignment = Alignment.End, modifier = Modifier.weight(1f, fill = false)) {
                             Text(
-                                text = "ارزش کل جدید سبد:",
+                                text = "ارزش جدید پورتفوی:",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 maxLines = 1,
@@ -221,13 +229,14 @@ fun CashInjectionModal(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "انتخاب و شخصی‌سازی تزریق به دارایی‌ها:",
+                        text = "شخصی‌سازی و خرید دارایی‌ها:",
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     TextButton(
                         onClick = {
+                            soundHaptic.tap()
                             customAmounts = simulationResult.simulatedAllocations.associate {
                                 it.asset.id to if (it.newInvestAmount > 0) it.newInvestAmount.toLong().toString() else "0"
                             }
@@ -237,7 +246,7 @@ fun CashInjectionModal(
                     ) {
                         Icon(Icons.Default.RestartAlt, contentDescription = null, modifier = Modifier.size(14.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("پیشنهاد هوشمند", style = MaterialTheme.typography.labelSmall)
+                        Text(strings.smartAllocation, style = MaterialTheme.typography.labelSmall)
                     }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
@@ -279,6 +288,7 @@ fun CashInjectionModal(
                                         Checkbox(
                                             checked = isSelected,
                                             onCheckedChange = { checked ->
+                                                soundHaptic.tap()
                                                 selectedAssetIds = if (checked) {
                                                     selectedAssetIds + simItem.asset.id
                                                 } else {
@@ -319,6 +329,7 @@ fun CashInjectionModal(
                                         }
                                         IconButton(
                                             onClick = {
+                                                soundHaptic.tap()
                                                 editingAssetId = if (isEditing) null else simItem.asset.id
                                                 if (!isSelected) {
                                                     selectedAssetIds = selectedAssetIds + simItem.asset.id
@@ -350,14 +361,17 @@ fun CashInjectionModal(
                                             onValueChange = { newVal ->
                                                 customAmounts = customAmounts + (simItem.asset.id to newVal)
                                             },
-                                            label = { Text("مبلغ ورودی به این دارایی ($currency)") },
+                                            label = { Text("${strings.cashAmount} ($currency)") },
                                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                             singleLine = true,
                                             modifier = Modifier.weight(1f),
                                             shape = RoundedCornerShape(8.dp)
                                         )
                                         IconButton(
-                                            onClick = { editingAssetId = null }
+                                            onClick = {
+                                                soundHaptic.tap()
+                                                editingAssetId = null
+                                            }
                                         ) {
                                             Icon(Icons.Default.CheckCircle, contentDescription = "Done", tint = MaterialTheme.colorScheme.primary)
                                         }
@@ -371,12 +385,12 @@ fun CashInjectionModal(
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Text(
-                                            text = "خرید ${CurrencyFormatter.formatQuantity(computedUnits, simItem.asset.symbol, usePersianDigits)}",
+                                            text = "${strings.actionBuyLabel} ${CurrencyFormatter.formatQuantity(computedUnits, simItem.asset.symbol, usePersianDigits)}",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                         Text(
-                                            text = "وزن هدف: ${CurrencyFormatter.formatPercent(simItem.targetWeight, usePersianDigits)}",
+                                            text = "${strings.targetWeight}: ${CurrencyFormatter.formatPercent(simItem.targetWeight, usePersianDigits)}",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.primary
                                         )
@@ -395,11 +409,14 @@ fun CashInjectionModal(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     OutlinedButton(
-                        onClick = onDismiss,
+                        onClick = {
+                            soundHaptic.tap()
+                            onDismiss()
+                        },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("انصراف")
+                        Text(strings.cancel)
                     }
 
                     Button(
@@ -415,6 +432,7 @@ fun CashInjectionModal(
                                     }
                                 }
                             if (itemsToApply.isNotEmpty()) {
+                                soundHaptic.successAction()
                                 onApply(itemsToApply)
                             }
                             onDismiss()
@@ -425,7 +443,7 @@ fun CashInjectionModal(
                     ) {
                         Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("اعمال به پورتفوی")
+                        Text(strings.applyRebalance)
                     }
                 }
             }

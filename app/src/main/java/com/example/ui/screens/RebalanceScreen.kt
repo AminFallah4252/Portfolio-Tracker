@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.CalculatedAsset
@@ -27,6 +28,7 @@ import com.example.ui.components.RebalanceActionCard
 import com.example.ui.theme.ActionBuyGreen
 import com.example.ui.theme.ActionSellRed
 import com.example.util.CurrencyFormatter
+import com.example.util.LocalSoundHaptic
 import com.example.util.Strings
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,7 +44,8 @@ fun RebalanceScreen(
     modifier: Modifier = Modifier,
     isPrivacyMode: Boolean = false
 ) {
-    var selectedTab by remember { mutableStateOf(0) } // 0: All, 1: Buys, 2: Sells, 3: Balanced
+    val soundHaptic = LocalSoundHaptic.current
+    var selectedTab by remember { mutableStateOf(0) } // 0: All, 1: Buys, 2: Sells, 3: Balanced, 4: Frozen
 
     val buyItems = remember(summary.calculatedAssets) {
         summary.calculatedAssets.filter { it.actionType == RebalanceActionType.BUY }
@@ -53,11 +56,15 @@ fun RebalanceScreen(
     val balancedItems = remember(summary.calculatedAssets) {
         summary.calculatedAssets.filter { it.actionType == RebalanceActionType.BALANCED }
     }
+    val frozenItems = remember(summary.calculatedAssets) {
+        summary.calculatedAssets.filter { it.actionType == RebalanceActionType.FROZEN }
+    }
 
     val displayItems = when (selectedTab) {
         1 -> buyItems
         2 -> sellItems
         3 -> balancedItems
+        4 -> frozenItems
         else -> summary.calculatedAssets
     }
 
@@ -149,12 +156,16 @@ fun RebalanceScreen(
                                     text = CurrencyFormatter.formatCurrency(summary.totalBuyAmount, currency, usePersianDigits, isHidden = isPrivacyMode),
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.ExtraBold,
-                                    color = ActionBuyGreen
+                                    color = ActionBuyGreen,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
                                     text = strings.assetsNeedBuy(summary.buyCount),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = ActionBuyGreen.copy(alpha = 0.8f)
+                                    color = ActionBuyGreen.copy(alpha = 0.8f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
@@ -177,12 +188,16 @@ fun RebalanceScreen(
                                     text = CurrencyFormatter.formatCurrency(summary.totalSellAmount, currency, usePersianDigits, isHidden = isPrivacyMode),
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.ExtraBold,
-                                    color = ActionSellRed
+                                    color = ActionSellRed,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
                                     text = strings.assetsNeedSell(summary.sellCount),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = ActionSellRed.copy(alpha = 0.8f)
+                                    color = ActionSellRed.copy(alpha = 0.8f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
@@ -190,7 +205,10 @@ fun RebalanceScreen(
 
                     // Cash Injection simulation button
                     FilledTonalButton(
-                        onClick = onOpenCashSimulator,
+                        onClick = {
+                            soundHaptic.tap()
+                            onOpenCashSimulator()
+                        },
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -240,33 +258,56 @@ fun RebalanceScreen(
             }
         }
 
-        // 4. Tab Selector (All / Buys / Sells / Balanced)
+        // 4. Scrollable Tab Row for Categories & Actions
         item {
-            PrimaryTabRow(
+            ScrollableTabRow(
                 selectedTabIndex = selectedTab,
+                edgePadding = 0.dp,
                 modifier = Modifier.fillMaxWidth(),
                 containerColor = MaterialTheme.colorScheme.surface
             ) {
                 Tab(
                     selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
+                    onClick = {
+                        soundHaptic.tap()
+                        selectedTab = 0
+                    },
                     text = { Text("${strings.filterAll} (${summary.calculatedAssets.size})", style = MaterialTheme.typography.labelMedium) }
                 )
                 Tab(
                     selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
+                    onClick = {
+                        soundHaptic.tap()
+                        selectedTab = 1
+                    },
                     text = { Text("${strings.actionBuy} (${buyItems.size})", color = ActionBuyGreen, style = MaterialTheme.typography.labelMedium) }
                 )
                 Tab(
                     selected = selectedTab == 2,
-                    onClick = { selectedTab = 2 },
+                    onClick = {
+                        soundHaptic.tap()
+                        selectedTab = 2
+                    },
                     text = { Text("${strings.actionSell} (${sellItems.size})", color = ActionSellRed, style = MaterialTheme.typography.labelMedium) }
                 )
                 Tab(
                     selected = selectedTab == 3,
-                    onClick = { selectedTab = 3 },
+                    onClick = {
+                        soundHaptic.tap()
+                        selectedTab = 3
+                    },
                     text = { Text("${strings.actionBalanced} (${balancedItems.size})", style = MaterialTheme.typography.labelMedium) }
                 )
+                if (frozenItems.isNotEmpty()) {
+                    Tab(
+                        selected = selectedTab == 4,
+                        onClick = {
+                            soundHaptic.tap()
+                            selectedTab = 4
+                        },
+                        text = { Text("${strings.actionFrozen} (${frozenItems.size})", color = Color(0xFF0369A1), style = MaterialTheme.typography.labelMedium) }
+                    )
+                }
             }
         }
 
@@ -304,6 +345,7 @@ fun RebalanceScreen(
                     item = asset,
                     currency = currency,
                     usePersianDigits = usePersianDigits,
+                    strings = strings,
                     isPrivacyMode = isPrivacyMode,
                     onQuickEdit = { onQuickEditAsset(asset) }
                 )

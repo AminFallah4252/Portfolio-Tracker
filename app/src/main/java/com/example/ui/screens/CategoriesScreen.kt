@@ -25,6 +25,7 @@ import com.example.data.model.PortfolioSummary
 import com.example.ui.components.AddEditCategoryDialog
 import com.example.ui.components.getCategoryIconVector
 import com.example.util.CurrencyFormatter
+import com.example.util.LocalSoundHaptic
 import com.example.util.Strings
 
 @Composable
@@ -48,6 +49,7 @@ fun CategoriesScreen(
     onDeleteCategory: (AssetCategory) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val soundHaptic = LocalSoundHaptic.current
     var showAddEditDialog by remember { mutableStateOf(false) }
     var editingCategory by remember { mutableStateOf<AssetCategory?>(null) }
     var categoryToDelete by remember { mutableStateOf<AssetCategory?>(null) }
@@ -114,6 +116,7 @@ fun CategoriesScreen(
                 )
                 Button(
                     onClick = {
+                        soundHaptic.tap()
                         editingCategory = null
                         showAddEditDialog = true
                     },
@@ -215,6 +218,7 @@ fun CategoriesScreen(
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             IconButton(
                                 onClick = {
+                                    soundHaptic.tap()
                                     editingCategory = cat
                                     showAddEditDialog = true
                                 },
@@ -229,7 +233,10 @@ fun CategoriesScreen(
                             }
 
                             IconButton(
-                                onClick = { categoryToDelete = cat },
+                                onClick = {
+                                    soundHaptic.deleteAction()
+                                    categoryToDelete = cat
+                                },
                                 modifier = Modifier.testTag("delete_category_${cat.id}")
                             ) {
                                 Icon(
@@ -385,6 +392,7 @@ fun CategoriesScreen(
             usePersianDigits = usePersianDigits,
             onDismiss = { showAddEditDialog = false },
             onSave = { name, colorHex, iconName, targetWeight, minWeight, maxWeight, targetTolerance, desc ->
+                soundHaptic.successAction()
                 if (editingCategory != null) {
                     onUpdateCategory(
                         editingCategory!!.copy(
@@ -424,6 +432,7 @@ fun CategoriesScreen(
             confirmButton = {
                 Button(
                     onClick = {
+                        soundHaptic.deleteAction()
                         categoryToDelete?.let { onDeleteCategory(it) }
                         categoryToDelete = null
                     },
@@ -433,7 +442,10 @@ fun CategoriesScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { categoryToDelete = null }) {
+                TextButton(onClick = {
+                    soundHaptic.tap()
+                    categoryToDelete = null
+                }) {
                     Text(strings.cancel)
                 }
             }

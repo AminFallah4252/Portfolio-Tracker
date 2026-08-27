@@ -15,19 +15,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.data.model.CalculatedAsset
 import com.example.data.model.RebalanceActionType
 import com.example.ui.theme.ActionBuyGreen
 import com.example.ui.theme.ActionSellRed
 import com.example.util.CurrencyFormatter
+import com.example.util.Strings
 
 @Composable
 fun AllocationComparisonBar(
     item: CalculatedAsset,
     usePersianDigits: Boolean,
+    strings: Strings,
     modifier: Modifier = Modifier
 ) {
+    val isFrozen = item.asset.isFrozen || item.actionType == RebalanceActionType.FROZEN
     val categoryColor = item.category?.colorHex?.let { hex ->
         try {
             Color(android.graphics.Color.parseColor(hex))
@@ -43,7 +45,7 @@ fun AllocationComparisonBar(
     )
 
     val targetWeightProgress by animateFloatAsState(
-        targetValue = (item.asset.targetWeight / 100f).toFloat().coerceIn(0f, 1f),
+        targetValue = if (isFrozen) 0f else (item.asset.targetWeight / 100f).toFloat().coerceIn(0f, 1f),
         animationSpec = tween(600),
         label = "targetWeight"
     )
@@ -81,7 +83,7 @@ fun AllocationComparisonBar(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Text(
-                    text = "فعلی: ${CurrencyFormatter.formatPercent(item.currentWeight, usePersianDigits)}",
+                    text = "${strings.currentWeight}: ${CurrencyFormatter.formatPercent(item.currentWeight, usePersianDigits)}",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -91,31 +93,37 @@ fun AllocationComparisonBar(
                     color = MaterialTheme.colorScheme.outline
                 )
                 Text(
-                    text = "هدف: ${CurrencyFormatter.formatPercent(item.asset.targetWeight, usePersianDigits)}",
+                    text = if (isFrozen) strings.frozenAssetBadge else "${strings.targetWeight}: ${CurrencyFormatter.formatPercent(item.asset.targetWeight, usePersianDigits)}",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = if (isFrozen) Color(0xFF0369A1) else MaterialTheme.colorScheme.primary
                 )
 
                 // Deviation Badge
                 val deviation = item.weightDeviation
                 val (badgeBg, badgeText, badgeColor) = when {
+                    isFrozen ->
+                        Triple(
+                            Color(0xFFE0F2FE),
+                            strings.actionFrozenLabel,
+                            Color(0xFF0369A1)
+                        )
                     item.actionType == RebalanceActionType.BUY ->
                         Triple(
                             com.example.ui.theme.ActionBuyContainer,
-                            "کسری (${CurrencyFormatter.formatPercent(Math.abs(deviation), usePersianDigits)})",
+                            "${strings.actionBuyLabel} (${CurrencyFormatter.formatPercent(Math.abs(deviation), usePersianDigits)})",
                             ActionBuyGreen
                         )
                     item.actionType == RebalanceActionType.SELL ->
                         Triple(
                             com.example.ui.theme.ActionSellContainer,
-                            "مازاد (${CurrencyFormatter.formatPercent(Math.abs(deviation), usePersianDigits)})",
+                            "${strings.actionSellLabel} (${CurrencyFormatter.formatPercent(Math.abs(deviation), usePersianDigits)})",
                             ActionSellRed
                         )
                     else ->
                         Triple(
                             MaterialTheme.colorScheme.surfaceVariant,
-                            "متعادل",
+                            strings.actionBalancedLabel,
                             MaterialTheme.colorScheme.onSurfaceVariant
                         )
                 }
@@ -145,10 +153,10 @@ fun AllocationComparisonBar(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "فعلی",
+                    text = strings.currentWeight.take(4),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.width(34.dp)
+                    modifier = Modifier.width(36.dp)
                 )
                 Box(
                     modifier = Modifier
@@ -168,31 +176,33 @@ fun AllocationComparisonBar(
             }
 
             // Target Allocation Bar
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = "هدف",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.width(34.dp)
-                )
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
+            if (!isFrozen) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
+                    Text(
+                        text = strings.targetWeight.take(4),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.width(36.dp)
+                    )
                     Box(
                         modifier = Modifier
-                            .fillMaxHeight()
-                            .fillMaxWidth(targetWeightProgress)
+                            .weight(1f)
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .fillMaxWidth(targetWeightProgress)
                             .clip(RoundedCornerShape(4.dp))
                             .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
-                    )
+                        )
+                    }
                 }
             }
         }

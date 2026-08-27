@@ -28,8 +28,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.data.model.AssetCategory
 import com.example.data.model.AssetItem
+import com.example.data.model.PortfolioProfile
 import com.example.data.model.PortfolioSnapshot
 import com.example.util.DataBackupHelper
+import com.example.util.LocalSoundHaptic
 import com.example.util.PortfolioBackupPayload
 import com.example.util.Strings
 
@@ -39,12 +41,14 @@ fun BackupRestoreDialog(
     categories: List<AssetCategory>,
     assets: List<AssetItem>,
     snapshots: List<PortfolioSnapshot>,
+    portfolios: List<PortfolioProfile> = emptyList(),
     currency: String,
     tolerancePercent: Double,
     onRestoreData: (PortfolioBackupPayload) -> Unit,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+    val soundHaptic = LocalSoundHaptic.current
     var selectedTab by remember { mutableStateOf(0) } // 0: Export, 1: Import
     var pastedJsonText by remember { mutableStateOf("") }
     var pendingPayload by remember { mutableStateOf<PortfolioBackupPayload?>(null) }
@@ -60,24 +64,28 @@ fun BackupRestoreDialog(
                     val content = stream.bufferedReader().readText()
                     val result = DataBackupHelper.parseFromJson(content)
                     result.onSuccess { payload ->
+                        soundHaptic.successAction()
                         pendingPayload = payload
                         errorMessage = null
                     }.onFailure { err ->
+                        soundHaptic.errorAction()
                         errorMessage = "${strings.importError}: ${err.localizedMessage ?: ""}"
                     }
                 }
             } catch (e: Exception) {
+                soundHaptic.errorAction()
                 errorMessage = "${strings.importError}: ${e.localizedMessage ?: ""}"
             }
         }
     }
 
     // Helper to generate export JSON
-    val exportJsonString = remember(categories, assets, snapshots, currency, tolerancePercent) {
-        DataBackupHelper.exportToJson(categories, assets, snapshots, currency, tolerancePercent)
+    val exportJsonString = remember(portfolios, categories, assets, snapshots, currency, tolerancePercent) {
+        DataBackupHelper.exportToJson(portfolios, categories, assets, snapshots, currency, tolerancePercent)
     }
 
     fun shareExportFile() {
+        soundHaptic.tap()
         val sendIntent: Intent = Intent().apply {
             action = Intent.ACTION_SEND
             putExtra(Intent.EXTRA_TEXT, exportJsonString)
@@ -89,6 +97,7 @@ fun BackupRestoreDialog(
     }
 
     fun copyExportToClipboard() {
+        soundHaptic.tap()
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip = ClipData.newPlainText("Portfolio Backup JSON", exportJsonString)
         clipboard.setPrimaryClip(clip)
@@ -135,7 +144,10 @@ fun BackupRestoreDialog(
                             fontWeight = FontWeight.Bold
                         )
                     }
-                    IconButton(onClick = onDismiss) {
+                    IconButton(onClick = {
+                        soundHaptic.tap()
+                        onDismiss()
+                    }) {
                         Icon(Icons.Default.Close, contentDescription = strings.close)
                     }
                 }
@@ -148,13 +160,21 @@ fun BackupRestoreDialog(
                 ) {
                     Tab(
                         selected = selectedTab == 0,
-                        onClick = { selectedTab = 0; errorMessage = null },
+                        onClick = {
+                            soundHaptic.tap()
+                            selectedTab = 0
+                            errorMessage = null
+                        },
                         text = { Text(strings.exportData, fontWeight = FontWeight.SemiBold) },
                         icon = { Icon(Icons.Default.Upload, contentDescription = null, modifier = Modifier.size(18.dp)) }
                     )
                     Tab(
                         selected = selectedTab == 1,
-                        onClick = { selectedTab = 1; errorMessage = null },
+                        onClick = {
+                            soundHaptic.tap()
+                            selectedTab = 1
+                            errorMessage = null
+                        },
                         text = { Text(strings.importData, fontWeight = FontWeight.SemiBold) },
                         icon = { Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp)) }
                     )
@@ -181,6 +201,12 @@ fun BackupRestoreDialog(
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
                                 )
+                                if (portfolios.isNotEmpty()) {
+                                    Text(
+                                        text = "• تعداد سبدهای سرمایه‌گذاری: ${portfolios.size} سبد",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
                                 Text(
                                     text = "• تعداد دارایی‌ها: ${assets.size} مورد",
                                     style = MaterialTheme.typography.bodySmall
@@ -231,6 +257,7 @@ fun BackupRestoreDialog(
 
                         Button(
                             onClick = {
+                                soundHaptic.tap()
                                 try {
                                     filePickerLauncher.launch("application/json")
                                 } catch (e: Exception) {
@@ -268,12 +295,15 @@ fun BackupRestoreDialog(
 
                         Button(
                             onClick = {
+                                soundHaptic.tap()
                                 if (pastedJsonText.isNotBlank()) {
                                     val result = DataBackupHelper.parseFromJson(pastedJsonText)
                                     result.onSuccess { payload ->
+                                        soundHaptic.successAction()
                                         pendingPayload = payload
                                         errorMessage = null
                                     }.onFailure { err ->
+                                        soundHaptic.errorAction()
                                         errorMessage = "${strings.importError}: ${err.localizedMessage ?: ""}"
                                     }
                                 }
@@ -312,7 +342,10 @@ fun BackupRestoreDialog(
 
                 // Bottom Close button
                 TextButton(
-                    onClick = onDismiss,
+                    onClick = {
+                        soundHaptic.tap()
+                        onDismiss()
+                    },
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) {
                     Text(strings.close)
@@ -333,6 +366,7 @@ fun BackupRestoreDialog(
             confirmButton = {
                 Button(
                     onClick = {
+                        soundHaptic.successAction()
                         onRestoreData(payload)
                         pendingPayload = null
                         Toast.makeText(context, strings.importSuccess, Toast.LENGTH_SHORT).show()
@@ -343,7 +377,10 @@ fun BackupRestoreDialog(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { pendingPayload = null }) {
+                TextButton(onClick = {
+                    soundHaptic.tap()
+                    pendingPayload = null
+                }) {
                     Text(strings.cancel)
                 }
             }

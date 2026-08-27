@@ -28,6 +28,7 @@ import com.example.data.model.RebalanceActionType
 import com.example.ui.components.AssetItemCard
 import com.example.ui.viewmodel.SortOption
 import com.example.util.CurrencyFormatter
+import com.example.util.LocalSoundHaptic
 import com.example.util.Strings
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,6 +54,7 @@ fun AssetsListScreen(
     modifier: Modifier = Modifier,
     isPrivacyMode: Boolean = false
 ) {
+    val soundHaptic = LocalSoundHaptic.current
     var sortMenuExpanded by remember { mutableStateOf(false) }
 
     LazyColumn(
@@ -76,7 +78,10 @@ fun AssetsListScreen(
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(20.dp)) },
                     trailingIcon = {
                         AnimatedVisibility(visible = searchQuery.isNotBlank(), enter = fadeIn(), exit = fadeOut()) {
-                            IconButton(onClick = { onSearchQueryChange("") }) {
+                            IconButton(onClick = {
+                                soundHaptic.tap()
+                                onSearchQueryChange("")
+                            }) {
                                 Icon(Icons.Default.Clear, contentDescription = "Clear", modifier = Modifier.size(18.dp))
                             }
                         }
@@ -93,7 +98,10 @@ fun AssetsListScreen(
                 // Sort Button & Menu
                 Box {
                     FilledTonalIconButton(
-                        onClick = { sortMenuExpanded = true },
+                        onClick = {
+                            soundHaptic.tap()
+                            sortMenuExpanded = true
+                        },
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.size(54.dp)
                     ) {
@@ -113,6 +121,7 @@ fun AssetsListScreen(
                                     }
                                 },
                                 onClick = {
+                                    soundHaptic.tap()
                                     onSortOptionChange(option)
                                     sortMenuExpanded = false
                                 }
@@ -132,7 +141,10 @@ fun AssetsListScreen(
                 item {
                     FilterChip(
                         selected = selectedCategoryFilter == null,
-                        onClick = { onCategoryFilterChange(null) },
+                        onClick = {
+                            soundHaptic.tap()
+                            onCategoryFilterChange(null)
+                        },
                         label = { Text(strings.filterAllCategories) },
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -147,6 +159,7 @@ fun AssetsListScreen(
                     FilterChip(
                         selected = selectedCategoryFilter == cat.id,
                         onClick = {
+                            soundHaptic.tap()
                             onCategoryFilterChange(if (selectedCategoryFilter == cat.id) null else cat.id)
                         },
                         leadingIcon = {
@@ -164,7 +177,7 @@ fun AssetsListScreen(
             }
         }
 
-        // Rebalance Action Status Filter Chips (Using LazyRow to prevent horizontal clipping)
+        // Rebalance Action Status Filter Chips
         item {
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -173,7 +186,10 @@ fun AssetsListScreen(
                 item {
                     FilterChip(
                         selected = selectedActionFilter == null,
-                        onClick = { onActionFilterChange(null) },
+                        onClick = {
+                            soundHaptic.tap()
+                            onActionFilterChange(null)
+                        },
                         label = { Text(strings.filterAllActions) },
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -182,6 +198,7 @@ fun AssetsListScreen(
                     FilterChip(
                         selected = selectedActionFilter == RebalanceActionType.BUY,
                         onClick = {
+                            soundHaptic.tap()
                             onActionFilterChange(if (selectedActionFilter == RebalanceActionType.BUY) null else RebalanceActionType.BUY)
                         },
                         label = { Text(strings.actionBuyLabel) },
@@ -192,6 +209,7 @@ fun AssetsListScreen(
                     FilterChip(
                         selected = selectedActionFilter == RebalanceActionType.SELL,
                         onClick = {
+                            soundHaptic.tap()
                             onActionFilterChange(if (selectedActionFilter == RebalanceActionType.SELL) null else RebalanceActionType.SELL)
                         },
                         label = { Text(strings.actionSellLabel) },
@@ -202,9 +220,21 @@ fun AssetsListScreen(
                     FilterChip(
                         selected = selectedActionFilter == RebalanceActionType.BALANCED,
                         onClick = {
+                            soundHaptic.tap()
                             onActionFilterChange(if (selectedActionFilter == RebalanceActionType.BALANCED) null else RebalanceActionType.BALANCED)
                         },
                         label = { Text(strings.actionBalancedLabel) },
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
+                item {
+                    FilterChip(
+                        selected = selectedActionFilter == RebalanceActionType.FROZEN,
+                        onClick = {
+                            soundHaptic.tap()
+                            onActionFilterChange(if (selectedActionFilter == RebalanceActionType.FROZEN) null else RebalanceActionType.FROZEN)
+                        },
+                        label = { Text(strings.actionFrozen) },
                         shape = RoundedCornerShape(12.dp)
                     )
                 }
@@ -229,7 +259,10 @@ fun AssetsListScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     FilledTonalButton(
-                        onClick = onAddAsset,
+                        onClick = {
+                            soundHaptic.tap()
+                            onAddAsset()
+                        },
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.height(32.dp)
@@ -282,7 +315,10 @@ fun AssetsListScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Button(
-                            onClick = onAddAsset,
+                            onClick = {
+                                soundHaptic.tap()
+                                onAddAsset()
+                            },
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -300,6 +336,7 @@ fun AssetsListScreen(
                 item = item,
                 currency = currency,
                 usePersianDigits = usePersianDigits,
+                strings = strings,
                 isPrivacyMode = isPrivacyMode,
                 onEdit = { onEditAsset(item) },
                 onQuickUpdate = { onQuickUpdateAsset(item) },

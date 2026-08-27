@@ -15,20 +15,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.data.model.CalculatedAsset
 import com.example.util.CurrencyFormatter
+import com.example.util.LocalSoundHaptic
+import com.example.util.Strings
 
 @Composable
 fun QuickUpdateDialog(
     item: CalculatedAsset,
     currency: String,
     usePersianDigits: Boolean,
+    strings: Strings,
     onDismiss: () -> Unit,
     onConfirm: (newQuantity: Double, newUnitPrice: Double) -> Unit
 ) {
+    val soundHaptic = LocalSoundHaptic.current
     var quantityStr by remember {
-        mutableStateOf(
-            if (item.asset.quantity % 1.0 == 0.0) item.asset.quantity.toLong().toString()
-            else item.asset.quantity.toString()
-        )
+        mutableStateOf(CurrencyFormatter.formatSmartFloat(item.asset.quantity))
     }
 
     var unitPriceStr by remember {
@@ -60,7 +61,7 @@ fun QuickUpdateDialog(
                 ) {
                     Column {
                         Text(
-                            text = "بروزرسانی سریع",
+                            text = strings.quickUpdate,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -70,8 +71,11 @@ fun QuickUpdateDialog(
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Close")
+                    IconButton(onClick = {
+                        soundHaptic.tap()
+                        onDismiss()
+                    }) {
+                        Icon(Icons.Default.Close, contentDescription = strings.close)
                     }
                 }
 
@@ -80,7 +84,7 @@ fun QuickUpdateDialog(
                 OutlinedTextField(
                     value = quantityStr,
                     onValueChange = { quantityStr = it },
-                    label = { Text("موجودی / تعداد") },
+                    label = { Text(strings.quantity) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -90,7 +94,7 @@ fun QuickUpdateDialog(
                 OutlinedTextField(
                     value = unitPriceStr,
                     onValueChange = { unitPriceStr = it },
-                    label = { Text("قیمت واحد ($currency)") },
+                    label = { Text("${strings.unitPrice} ($currency)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -109,7 +113,7 @@ fun QuickUpdateDialog(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "ارزش کل جدید:",
+                            text = "${strings.totalValue}:",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -127,21 +131,25 @@ fun QuickUpdateDialog(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     OutlinedButton(
-                        onClick = onDismiss,
+                        onClick = {
+                            soundHaptic.tap()
+                            onDismiss()
+                        },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(10.dp)
                     ) {
-                        Text("انصراف")
+                        Text(strings.cancel)
                     }
 
                     Button(
                         onClick = {
+                            soundHaptic.successAction()
                             onConfirm(qty, price)
                         },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(10.dp)
                     ) {
-                        Text("اعمال")
+                        Text(strings.save)
                     }
                 }
             }

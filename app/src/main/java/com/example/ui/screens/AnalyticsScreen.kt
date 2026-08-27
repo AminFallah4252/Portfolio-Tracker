@@ -21,6 +21,7 @@ import com.example.data.model.PortfolioSnapshot
 import com.example.data.model.PortfolioSummary
 import com.example.ui.components.TrendGrowthChart
 import com.example.util.CurrencyFormatter
+import com.example.util.LocalSoundHaptic
 import com.example.util.Strings
 
 @Composable
@@ -34,6 +35,7 @@ fun AnalyticsScreen(
     onDeleteSnapshot: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val soundHaptic = LocalSoundHaptic.current
     var showAddSnapshotDialog by remember { mutableStateOf(false) }
     var snapshotNote by remember { mutableStateOf("") }
 
@@ -56,7 +58,10 @@ fun AnalyticsScreen(
         // 2. Snapshot Action Button
         item {
             FilledTonalButton(
-                onClick = { showAddSnapshotDialog = true },
+                onClick = {
+                    soundHaptic.tap()
+                    showAddSnapshotDialog = true
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 contentPadding = PaddingValues(vertical = 12.dp)
@@ -94,17 +99,21 @@ fun AnalyticsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Column {
+                                Column(modifier = Modifier.weight(1f, fill = false)) {
                                     Text(
                                         text = strings.topHolding,
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
                                     Text(
                                         text = topAsset.asset.name,
                                         style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                 }
 
@@ -113,12 +122,16 @@ fun AnalyticsScreen(
                                         text = CurrencyFormatter.formatPercent(topAsset.currentWeight, usePersianDigits),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.ExtraBold,
-                                        color = MaterialTheme.colorScheme.primary
+                                        color = MaterialTheme.colorScheme.primary,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                     Text(
                                         text = CurrencyFormatter.formatCurrency(topAsset.currentValue, currency, usePersianDigits),
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                 }
                             }
@@ -231,12 +244,16 @@ fun AnalyticsScreen(
                                 Text(
                                     text = CurrencyFormatter.formatCurrency(catSummary.totalValue, currency, usePersianDigits),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
                                     text = CurrencyFormatter.formatPercent(catSummary.currentWeight, usePersianDigits),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = MaterialTheme.colorScheme.primary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
@@ -298,7 +315,10 @@ fun AnalyticsScreen(
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold
                             )
-                            IconButton(onClick = { onDeleteSnapshot(snap.id) }) {
+                            IconButton(onClick = {
+                                soundHaptic.deleteAction()
+                                onDeleteSnapshot(snap.id)
+                            }) {
                                 Icon(
                                     Icons.Default.DeleteOutline,
                                     contentDescription = strings.delete,
@@ -338,6 +358,7 @@ fun AnalyticsScreen(
             confirmButton = {
                 Button(
                     onClick = {
+                        soundHaptic.successAction()
                         onRecordSnapshot(snapshotNote)
                         snapshotNote = ""
                         showAddSnapshotDialog = false
@@ -348,7 +369,10 @@ fun AnalyticsScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showAddSnapshotDialog = false }) {
+                TextButton(onClick = {
+                    soundHaptic.tap()
+                    showAddSnapshotDialog = false
+                }) {
                     Text(strings.cancel)
                 }
             }
