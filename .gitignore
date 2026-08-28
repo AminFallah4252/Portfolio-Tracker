@@ -15,4 +15,9 @@
 .cxx
 local.properties
 .env
+.idea/
+.agents/
+.agents
+.agent*
 debug.keystore
+*.apk

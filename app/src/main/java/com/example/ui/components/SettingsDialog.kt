@@ -46,6 +46,7 @@ fun SettingsDialog(
     isHapticEnabled: Boolean,
     onHapticToggle: (Boolean) -> Unit,
     onOpenBackupRestore: () -> Unit,
+    onOpenHelpTutorial: () -> Unit = {},
     onResetSettings: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -243,6 +244,57 @@ fun SettingsDialog(
                             Icon(Icons.Default.Upload, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(strings.backupRestoreAction, style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                }
+
+                // Help & Tutorials Section
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                    ),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.AutoStories,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = strings.helpSectionTitle,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+                        Text(
+                            text = strings.helpSectionSubtitle,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        FilledTonalButton(
+                            onClick = {
+                                soundHaptic.tap()
+                                onOpenHelpTutorial()
+                            },
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.fillMaxWidth().testTag("button_open_help_tutorials")
+                        ) {
+                            Icon(Icons.Default.MenuBook, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(strings.helpGuideAction, style = MaterialTheme.typography.labelMedium)
                         }
                     }
                 }

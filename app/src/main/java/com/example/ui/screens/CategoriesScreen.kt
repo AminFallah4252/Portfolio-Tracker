@@ -349,7 +349,10 @@ fun CategoriesScreen(
 
                                 // Range bounds
                                 Text(
-                                    text = "محدوده: ${CurrencyFormatter.formatPercent(cat.minWeight, usePersianDigits)} - ${CurrencyFormatter.formatPercent(cat.maxWeight, usePersianDigits)}",
+                                    text = strings.classAllocationRange(
+                                        CurrencyFormatter.formatPercent(cat.minWeight, usePersianDigits),
+                                        CurrencyFormatter.formatPercent(cat.maxWeight, usePersianDigits)
+                                    ),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

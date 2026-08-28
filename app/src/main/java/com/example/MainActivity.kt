@@ -110,6 +110,7 @@ class MainActivity : FragmentActivity() {
                     var showAddCategoryDialog by remember { mutableStateOf(false) }
                     var showSetPasscodeDialog by remember { mutableStateOf(false) }
                     var showBackupRestoreDialog by remember { mutableStateOf(false) }
+                    var showHelpTutorialDialog by remember { mutableStateOf(false) }
                     var showUnlockPrivacyDialog by remember { mutableStateOf(false) }
                     var assetToDelete by remember { mutableStateOf<CalculatedAsset?>(null) }
 
@@ -258,6 +259,20 @@ class MainActivity : FragmentActivity() {
                                         Icon(
                                             Icons.Default.Backup,
                                             contentDescription = strings.backupSection,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+
+                                    IconButton(
+                                        onClick = {
+                                            soundHapticHelper.tap()
+                                            showHelpTutorialDialog = true
+                                        },
+                                        modifier = Modifier.testTag("topbar_help_button")
+                                    ) {
+                                        Icon(
+                                            Icons.Default.HelpOutline,
+                                            contentDescription = strings.helpSectionTitle,
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
@@ -569,11 +584,21 @@ class MainActivity : FragmentActivity() {
                             isHapticEnabled = isHapticEnabled,
                             onHapticToggle = { soundHapticHelper.setHapticEnabled(it) },
                             onOpenBackupRestore = { showBackupRestoreDialog = true },
+                            onOpenHelpTutorial = { showHelpTutorialDialog = true },
                             onResetSettings = {
                                 viewModel.resetSettingsToDefaults()
                                 soundHapticHelper.warningAction()
                             },
                             onDismiss = { showSettingsDialog = false }
+                        )
+                    }
+
+                    // Help & Tutorials Dialog
+                    if (showHelpTutorialDialog) {
+                        HelpTutorialDialog(
+                            strings = strings,
+                            usePersianDigits = usePersianDigits,
+                            onDismiss = { showHelpTutorialDialog = false }
                         )
                     }
 

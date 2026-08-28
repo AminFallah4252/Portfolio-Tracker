@@ -15,6 +15,16 @@ object AppStrings {
     fun get(lang: AppLanguage): Strings = if (lang == AppLanguage.ENGLISH) EnglishStrings else PersianStrings
 }
 
+data class HelpTopic(
+    val id: String,
+    val iconName: String,
+    val title: String,
+    val subtitle: String,
+    val description: String,
+    val steps: List<String>,
+    val tip: String = ""
+)
+
 interface Strings {
     // App & Navigation
     val appTitle: String
@@ -191,6 +201,7 @@ interface Strings {
     val classStatusWithinRange: String
     val classStatusBelowMin: String
     val classStatusAboveMax: String
+    val classAllocationRange: (String, String) -> String
 
     // Rebalance Screen
     val rebalanceOverviewTitle: String
@@ -228,6 +239,15 @@ interface Strings {
     val cashInjectionDesc: String
     val cashAmount: String
     val smartAllocation: String
+
+    // Help & Tutorials
+    val helpSectionTitle: String
+    val helpSectionSubtitle: String
+    val helpGuideAction: String
+    val helpSearchPlaceholder: String
+    val helpQuickTips: String
+    val helpStepByStep: String
+    val helpTopics: List<HelpTopic>
 
     // Settings
     val settingsTitle: String
@@ -489,6 +509,7 @@ object PersianStrings : Strings {
     override val classStatusWithinRange = "در محدوده مجاز تخصیص"
     override val classStatusBelowMin = "کمتر از کف مجاز"
     override val classStatusAboveMax = "بیشتر از سقف مجاز"
+    override val classAllocationRange: (String, String) -> String = { min, max -> "محدوده: $min - $max" }
 
     override val rebalanceOverviewTitle = "ماتریس ریبالانس و تعدیل سبد"
     override val rebalanceOverviewSubtitle = "محاسبه دقیق مقدار و تعداد خرید یا فروش هر دارایی جهت همگرایی پورتفوی به اوزان هدف ایده‌آل."
@@ -524,6 +545,140 @@ object PersianStrings : Strings {
     override val cashAmount = "مبلغ نقدینگی"
     override val smartAllocation = "محاسبه هوشمند"
 
+    // Help & Tutorials (Persian)
+    override val helpSectionTitle = "راهنما و آموزش جامع برنامه"
+    override val helpSectionSubtitle = "آموزش گام‌به‌گام تمام بخش‌ها و قابلیت‌های پیشرفته پورتفوی"
+    override val helpGuideAction = "راهنما و آموزش برنامه"
+    override val helpSearchPlaceholder = "جستجوی مبحث، اصطلاح یا آموزش..."
+    override val helpQuickTips = "نکات کلیدی و کاربردی"
+    override val helpStepByStep = "مراحل و راهنمای عملی"
+
+    override val helpTopics: List<HelpTopic> = listOf(
+        HelpTopic(
+            id = "portfolios",
+            iconName = "pie_chart",
+            title = "مدیریت چند سبد سرمایه‌گذاری",
+            subtitle = "ایجاد و تفکیک پورتفوهای مختلف با استراتژی‌های جداگانه",
+            description = "این قابلیت به شما اجازه می‌دهد چندین سبد دارایی مستقل (مانند سبد اصلی، صندوق بازنشستگی، سبد کوتاه‌مدت یا سرمایه‌گذاری پرریسک) تعریف کنید. دارایی‌ها، کلاس‌ها و تاریخچه هر سبد به صورت تفکیک‌شده محاسبه می‌شود.",
+            steps = listOf(
+                "از منوی کشویی بالای صفحه داشبورد روی عنوان سبد جاری کلیک کنید.",
+                "دکمه «مدیریت سبدهای سرمایه‌گذاری» یا «افزودن سبد جدید» را انتخاب کنید.",
+                "نام سبد، توضیحات استراتژی و رنگ اختصاصی آن را مشخص کرده و ذخیره نمایید.",
+                "برای جابجایی بین سبدها کافی است روی کارت هر سبد کلیک کنید."
+            ),
+            tip = "می‌توانید یک سبد را به عنوان «سبد پیش‌فرض» تنظیم کنید تا هنگام باز شدن برنامه به صورت خودکار بارگذاری شود."
+        ),
+        HelpTopic(
+            id = "dashboard",
+            iconName = "dashboard",
+            title = "داشبورد و شاخص سلامت توازن (Drift)",
+            subtitle = "نظارت جامع بر ارزش خالص، ترکیب تخصیص و انحراف اوزان",
+            description = "داشبورد نمای کلی وضعیت مالی شما را نشان می‌دهد. ارزش خالص کل (Net Worth)، تفکیک دارایی‌های نقدشونده و منجمد، نمودار دایره‌ای تخصیص، شاخص سلامت توازن (Health Score) و نمودار انحراف وزنی (Drift) در این بخش قرار دارند.",
+            steps = listOf(
+                "کارت ارزش کل: نشان‌دهنده جمع ارزش کلیه دارایی‌های نقد و غیرنقد پورتفوی است.",
+                "شاخص سلامت توازن: عددی بین ۰ تا ۱۰۰ که میزان همگرایی اوزان فعلی با اوزان هدف ایده‌آل شما را می‌سنجد.",
+                "نمودار انحراف وزنی (Drift): ستون‌های سبز نشان‌دهنده دارایی‌های دارای کسری وزن و ستون‌های قرمز نشان‌دهنده مازاد وزن هستند.",
+                "اقدامات فوری ریبالانس: دسترسی سریع به اولویت‌دارترین دارایی‌هایی که نیازمند خرید یا فروش هستند."
+            ),
+            tip = "با لمس آیکون چشم در نوار بالای صفحه می‌توانید حالت حریم خصوصی را فعال کنید تا ارقام پنهان شوند."
+        ),
+        HelpTopic(
+            id = "assets_frozen",
+            iconName = "account_balance_wallet",
+            title = "مدیریت دارایی‌ها و دارایی‌های منجمد (Frozen)",
+            subtitle = "ثبت دارایی‌ها، اوزان هدف و مدیریت دارایی‌های غیرنقدشونده",
+            description = "در صفحه دارایی‌ها می‌توانید لیست کامل دارایی‌ها را مشاهده، جستجو، فیلتر و مرتب کنید. همچنین امکان انجماد کامل یا درصدی دارایی‌های غیرقابل نقدشوندگی سریع (مانند ملک یا حساب‌های مسدود) وجود دارد.",
+            steps = listOf(
+                "افزودن دارایی: دکمه + را فشرده و نام، نماد، کلاس دارایی، تعداد، قیمت واحد و درصد وزن هدف را وارد کنید.",
+                "دارایی منجمد (Frozen): کلید دارایی منجمد را فعال کنید. می‌توانید مشخص کنید چند درصد از دارایی منجمد است.",
+                "بخش منجمد در ارزش کل پورتفوی محاسبه می‌شود اما در محاسبات معاملات ریبالانس دخالت داده نمی‌شود.",
+                "بروزرسانی سریع: برای تغییر سریع قیمت یا موجودی بدون ورود به فرم ویرایش، از دکمه رعدوبرق استفاده کنید."
+            ),
+            tip = "برای دستیابی به ریبالانس دقیق، مجموع اوزان هدف دارایی‌های نقدشونده پورتفوی باید برابر ۱۰۰٪ باشد."
+        ),
+        HelpTopic(
+            id = "rebalance",
+            iconName = "balance",
+            title = "ماتریس ریبالانس هوشمند",
+            subtitle = "محاسبه دقیق معاملات خرید و فروش جهت بازگرداندن تعادل سبد",
+            description = "الگوریتم ریبالانس با تحلیل تفاوت وزن فعلی هر دارایی نسبت به وزن هدف، دستورالعمل دقیق خرید (جهت تقویت موقعیت‌های دارای کسری) و فروش (سیو سود موقعیت‌های دارای مازاد) را محاسبه می‌کند.",
+            steps = listOf(
+                "به تب «ریبالانس» مراجعه نمایید.",
+                "کارت‌های خلاصه، مجموع مبلغ خرید لازم و مجموع فروش مازاد را نمایش می‌دهند.",
+                "در صورت عدم برابری مجموع اوزان با ۱۰۰٪، دکمه «تعدیل خودکار» را بزنید تا اوزان به تناسب نرمال شوند.",
+                "دستورالعمل‌های معاملاتی هر دارایی، تعداد واحد دقیق و مبلغ پیشنهادی را ارائه می‌دهند."
+            ),
+            tip = "میزان آستانه تلرانس را می‌توانید در بخش تنظیمات مشخص کنید تا نوسانات جزئی به عنوان نیاز به معامله تشخیص داده نشوند."
+        ),
+        HelpTopic(
+            id = "cash_injection",
+            iconName = "attach_money",
+            title = "شبیه‌ساز تزریق نقدینگی هوشمند",
+            subtitle = "متعادل‌سازی سبد با ورود پول جدید بدون نیاز به فروش دارایی‌ها",
+            description = "اگر پول جدید (حقوق، پس‌انداز یا سود) وارد سبد می‌کنید، شبیه‌ساز تزریق نقدینگی پول جدید را منحصراً بین دارایی‌های دارای کسری وزن توزیع می‌کند تا بدون نیاز به پرداخت کارمزد یا فروش دارایی‌های برنده، سبد به تعادل برسد.",
+            steps = listOf(
+                "آیکون کیف پول (تزریق نقدینگی) را در نوار بالای صفحه لمس کنید.",
+                "مبلغ پول جدیدی که قصد ورود به سبد دارید را وارد نمایید.",
+                "دکمه «شبیه‌سازی و محاسبه تخصیص» را بزنید تا سهم هر دارایی و تعداد واحد خرید محاسبه شود.",
+                "در صورت تمایل دکمه «اعمال به پورتفوی» را لمس کنید تا دارایی‌ها بروزرسانی شوند."
+            ),
+            tip = "تزریق نقدینگی بهترین روش ریبالانس در بازارهای صعودی بدون ایجاد بدهی مالیاتی یا کارمزد فروش است."
+        ),
+        HelpTopic(
+            id = "categories",
+            iconName = "category",
+            title = "کلاس‌های دارایی و حدود ریسک",
+            subtitle = "دسته‌بندی، سهم هر طبقه و تعیین سقف و کف مجاز تخصیص",
+            description = "کلاس‌های دارایی (مانند طلا، سهام، نقدینگی، کریپتو، املاک) ستون فقرات مدیریت ریسک هستند. در این بخش می‌توانید درصد مطلوب و بازه مجاز (کف و سقف) حضور هر طبقه دارایی را کنترل نمایید.",
+            steps = listOf(
+                "به تب «کلاس‌ها» بروید تا ارزش و سهم درصدی هر طبقه از کل سبد را مشاهده کنید.",
+                "با لمس دکمه ویرایش روی هر کلاس، می‌توانید وزن هدف و محدوده مجاز (حداقل و حداکثر وزن) را تعیین کنید.",
+                "اگر سهم کلاسی از حداقل کمتر یا از حداکثر بیشتر شود، برچسب هشدار نمایش داده می‌شود.",
+                "می‌توانید کلاس‌های جدید با رنگ و آیکون دلخواه اضافه نمایید."
+            ),
+            tip = "تعریف محدوده مجاز به شما کمک می‌کند در دوران هیجانات بازار از سرمایه‌گذاری بیش از حد روی یک طبقه پرریسک جلوگیری کنید."
+        ),
+        HelpTopic(
+            id = "analytics",
+            iconName = "trending_up",
+            title = "تحلیل روند، تاریخچه و تنوع‌بخشی",
+            subtitle = "ثبت اسنپ‌شات‌های دوره‌ای و ارزیابی تمرکز ریسک",
+            description = "در تب تحلیل می‌توانید اسنپ‌شات‌هایی از ارزش سبد در طول زمان ثبت کرده و نمودار رشد سرمایه خود را رصد کنید. همچنین سطح تنوع‌بخشی و ریسک تک‌سهمی پورتفوی تحلیل می‌شود.",
+            steps = listOf(
+                "دکمه «ثبت اسنپ‌شات جدید» را بزنید تا ارزش فعلی پورتفوی با تاریخ امروز در تاریخچه ثبت شود.",
+                "نمودار روند تغییرات ارزش سبد را در طول بازه‌های زمانی مختلف مشاهده کنید.",
+                "کارت تمرکز ریسک وضعیت تنوع‌بخشی و بزرگترین موقعیت پورتفوی را ارزیابی می‌کند."
+            ),
+            tip = "پیشنهاد می‌شود به صورت هفتگی یا ماهانه یک اسنپ‌شات ثبت کنید تا سابقه عملکرد مالی شما کامل بماند."
+        ),
+        HelpTopic(
+            id = "security",
+            iconName = "lock",
+            title = "امنیت، رمز عبور و حریم خصوصی",
+            subtitle = "حفاظت از اطلاعات با رمز ۴ رقمی، بیومتریک و مخفی‌سازی مقادیر",
+            description = "برای حفاظت از اطلاعات مالی شما در محیط‌های عمومی، برنامه از قفل رمز عبور ۴ رقمی، سنسور اثر انگشت / تشخیص چهره و حالت حریم خصوصی سریع پشتیبانی می‌کند.",
+            steps = listOf(
+                "در منوی تنظیمات، گزینه «قفل با رمز عبور (PIN)» را روشن کرده و رمز دلخواه را وارد کنید.",
+                "در صورت پشتیبانی گوشی، گزینه «ورود با اثر انگشت / بیومتریک» را نیز فعال نمایید.",
+                "در اماکن عمومی، آیکون چشم بالای صفحه را لمس کنید تا تمام ارقام با ستاره (*****) پوشانده شوند."
+            ),
+            tip = "برای رفع مخفی‌سازی مقادیر هنگامی که رمز فعال است، احراز هویت با رمز یا اثر انگشت الزامی است."
+        ),
+        HelpTopic(
+            id = "backup",
+            iconName = "backup",
+            title = "پشتیبان‌گیری و انتقال داده‌ها (JSON)",
+            subtitle = "خروجی آفلاین، بازگردانی آسان و اشتراک‌گذاری داده‌ها",
+            description = "تمامی اطلاعات شما به صورت ۱۰۰٪ آفلاین و محلی در گوشی نگهداری می‌شود. شما می‌توانید در هر زمان از تمامی سبدها، دارایی‌ها، کلاس‌ها و تاریخچه اسنپ‌شات‌ها خروجی استاندارد JSON تهیه کنید.",
+            steps = listOf(
+                "آیکون پشتیبان‌گیری در نوار بالای صفحه یا تنظیمات را باز کنید.",
+                "تب «خروجی (Export)»: دکمه «اشتراک‌گذاری / ذخیره فایل» یا «کپی متن JSON» را انتخاب کنید.",
+                "تب «ورودی (Import)»: برای بازیابی در گوشی جدید، متن JSON را جایگذاری کرده و تایید را لمس نمایید."
+            ),
+            tip = "پشتیبان‌گیری منظم باعث می‌شود در صورت تعویض یا گم شدن دستگاه، پورتفوی شما به آسانی قابل بازیابی باشد."
+        )
+    )
+
     override val settingsTitle = "تنظیمات و سفارشی‌سازی"
     override val generalSettingsSection = "تنظیمات عمومی و ظاهر"
     override val languageSetting = "زبان برنامه (Language)"
@@ -540,9 +695,9 @@ object PersianStrings : Strings {
     override val resetSettingsConfirmTitle = "بازنشانی تنظیمات برنامه"
     override val resetSettingsConfirmText = "تنظیمات ظاهری، زبان، تم و تلرانس به حالت اولیه برمی‌گردند. دارایی‌ها و داده‌های شما دست‌نخورده باقی می‌مانند."
     override val resetSettingsConfirmAction = "بازنشانی تنظیمات"
-    override val resetDataButton = "بازنشانی داده‌ها به نمونه اولیه اکسل"
+    override val resetDataButton = "بازنشانی داده‌ها به مقادیر اولیه"
     override val resetConfirmTitle = "بازنشانی پایگاه داده دارایی‌ها"
-    override val resetConfirmText = "آیا مایلید تمام دارایی‌ها و کلاس‌ها به داده‌های نمونه اولیه (طلا، سهام، تتر، مس، فملی و...) بازنشانی شوند؟"
+    override val resetConfirmText = "آیا مایلید تمام دارایی‌ها حذف شده و کلاس‌های دارایی به حالت پیش‌فرض و خالی بازنشانی شوند؟"
     override val resetConfirmAction = "بازنشانی"
     override val applyAndClose = "ذخیره و اعمال"
     override val backupRestoreDesc = "پشتیبان‌گیری کامل از اطلاعات، سبدها و انتقال داده‌ها با فرمت استاندارد JSON"
@@ -784,6 +939,7 @@ object EnglishStrings : Strings {
     override val classStatusWithinRange = "Within Target Allocation Range"
     override val classStatusBelowMin = "Below Minimum Bound"
     override val classStatusAboveMax = "Exceeds Maximum Bound"
+    override val classAllocationRange: (String, String) -> String = { min, max -> "Bounds: $min - $max" }
 
     override val rebalanceOverviewTitle = "Rebalance & Allocation Matrix"
     override val rebalanceOverviewSubtitle = "Calculates exact trade amounts and units to align your holdings with target allocation percentages."
@@ -819,6 +975,140 @@ object EnglishStrings : Strings {
     override val cashAmount = "Cash Amount"
     override val smartAllocation = "Smart Allocation"
 
+    // Help & Tutorials (English)
+    override val helpSectionTitle = "User Guide & Tutorials"
+    override val helpSectionSubtitle = "Complete step-by-step walkthrough of all portfolio features"
+    override val helpGuideAction = "User Guide & Tutorials"
+    override val helpSearchPlaceholder = "Search tutorial, term, or topic..."
+    override val helpQuickTips = "Pro Tips & Key Concepts"
+    override val helpStepByStep = "Step-by-Step Instructions"
+
+    override val helpTopics: List<HelpTopic> = listOf(
+        HelpTopic(
+            id = "portfolios",
+            iconName = "pie_chart",
+            title = "Multi-Portfolio Management",
+            subtitle = "Create and isolate separate investment strategies",
+            description = "Manage multiple distinct portfolios (such as Main Portfolio, Long-term Retirement, High Growth, or Trading). Each portfolio maintains its own asset holdings, weight targets, and historical performance.",
+            steps = listOf(
+                "Tap the portfolio selector dropdown at the top of the Dashboard screen.",
+                "Select \"Manage Portfolios\" or \"Create New Portfolio\".",
+                "Provide a name, investment objective/description, and color accent, then save.",
+                "Switch seamlessly between portfolios with a single tap on any portfolio card."
+            ),
+            tip = "Designate your primary portfolio as the \"Default Portfolio\" to have it open automatically upon launching the app."
+        ),
+        HelpTopic(
+            id = "dashboard",
+            iconName = "dashboard",
+            title = "Dashboard & Balance Health Score",
+            subtitle = "Monitor Net Worth, Allocation Drift, and Alignment",
+            description = "The Dashboard offers a high-level overview of your wealth: Total Net Worth, Liquid vs. Frozen breakdown, allocation donut chart, Balance Health Score (0-100), and the Drift Visualizer chart.",
+            steps = listOf(
+                "Net Worth Card: Displays the combined total of all tradeable and frozen holdings.",
+                "Balance Health Score: A 0-100 metric measuring how closely your current holdings adhere to target weights.",
+                "Allocation Drift Chart: Green bars represent underweight assets (buying needed); red bars indicate overweight assets.",
+                "Priority Actions: Quick shortcuts highlighting top assets needing immediate rebalancing."
+            ),
+            tip = "Tap the Eye icon on the Top Bar to activate Privacy Mode, instantly masking all monetary balances with asterisks (*****)."
+        ),
+        HelpTopic(
+            id = "assets_frozen",
+            iconName = "account_balance_wallet",
+            title = "Holdings & Frozen / Illiquid Assets",
+            subtitle = "Manage asset details, targets, and lock non-tradeable funds",
+            description = "Add and organize your investment positions with quantities, unit prices, and target percentages. Use the Frozen asset feature to protect illiquid assets (real estate, locked deposits) from rebalance trading.",
+            steps = listOf(
+                "Add Asset: Tap the + FAB button and enter the asset name, symbol, class, quantity, price, and target %.",
+                "Frozen Asset: Toggle the Frozen switch. You can freeze 100% of the asset or specify a custom frozen percentage.",
+                "The frozen portion contributes to Total Net Worth but is strictly excluded from liquid rebalance calculations.",
+                "Quick Update: Tap the lightning icon on any asset card to rapidly modify price or quantity without opening the full editor."
+            ),
+            tip = "For mathematically accurate rebalancing, ensure the sum of liquid asset target weights equals exactly 100%."
+        ),
+        HelpTopic(
+            id = "rebalance",
+            iconName = "balance",
+            title = "Smart Rebalance Engine",
+            subtitle = "Precision trade calculations to restore target portfolio weights",
+            description = "The rebalancing engine compares your current asset weights against your target allocations and generates exact buy orders (for deficit positions) and sell orders (to take profit on overweight positions).",
+            steps = listOf(
+                "Navigate to the \"Rebalance\" tab.",
+                "Review the summary cards showing total buy required and total sell surplus.",
+                "If your total target weight is not 100%, tap \"Auto Normalize\" to scale all targets proportionally.",
+                "Follow the Trade Execution Plan showing units and amounts to trade for each asset."
+            ),
+            tip = "Adjust the tolerance threshold in Settings (e.g. ±1.0%) to prevent unnecessary trades caused by minor market fluctuations."
+        ),
+        HelpTopic(
+            id = "cash_injection",
+            iconName = "attach_money",
+            title = "Smart Cash Injection Simulator",
+            subtitle = "Rebalance using fresh capital without selling existing winning positions",
+            description = "When depositing fresh cash (paychecks, savings, dividends), the simulator calculates the optimal distribution solely to underweight holdings, bringing your portfolio into balance without liquidating profitable assets.",
+            steps = listOf(
+                "Tap the Wallet / Cash Injection icon in the Top App Bar.",
+                "Enter the fresh cash amount you plan to invest.",
+                "Tap \"Calculate Optimal Allocation\" to view recommended purchase amounts and units.",
+                "Tap \"Apply to Portfolio\" to automatically credit holdings and update snapshots."
+            ),
+            tip = "Cash injection rebalancing avoids capital gains taxes and transaction fees associated with selling assets."
+        ),
+        HelpTopic(
+            id = "categories",
+            iconName = "category",
+            title = "Asset Classes & Allocation Bounds",
+            subtitle = "Classify holdings and set minimum floor and maximum cap bounds",
+            description = "Asset classes (Gold, Equities, Fixed Income, Crypto, Cash, Real Estate) form the foundation of portfolio diversification. Establish target shares and enforce risk guardrails with Min/Max allocation bounds.",
+            steps = listOf(
+                "Open the \"Classes\" tab to view current values and percentage shares per asset category.",
+                "Tap the Edit icon on any class to configure target weight, minimum allowed floor, and maximum allowed cap.",
+                "If a class drifts beyond its configured bounds, a visual status warning badge appears.",
+                "Create custom classes with personalized icons and theme colors."
+            ),
+            tip = "Setting a strict Maximum Cap on volatile classes prevents single-sector bubbles from dominating your portfolio."
+        ),
+        HelpTopic(
+            id = "analytics",
+            iconName = "trending_up",
+            title = "Historical Analytics & Diversification",
+            subtitle = "Track net worth snapshots over time and assess concentration risk",
+            description = "Capture point-in-time snapshots of portfolio value to generate historical growth trend charts. The analytics engine also computes your diversification score and flags excessive risk concentration.",
+            steps = listOf(
+                "Tap \"Record New Snapshot\" to log current portfolio net worth with today\'s timestamp.",
+                "Inspect the interactive Trend Growth Chart across historical data points.",
+                "Review the Diversification & Risk Concentration analysis evaluating top position weights."
+            ),
+            tip = "Record a snapshot weekly or monthly to maintain an accurate, long-term financial growth record."
+        ),
+        HelpTopic(
+            id = "security",
+            iconName = "lock",
+            title = "Security, PIN Passcode & Privacy",
+            subtitle = "Protect sensitive balances with PIN, Biometrics, and Privacy masking",
+            description = "Safeguard your financial privacy using a 4-digit PIN passcode, Biometric sensor unlock (Fingerprint / Face ID), and Privacy Mode value masking.",
+            steps = listOf(
+                "Open Settings and toggle \"Passcode Lock (PIN)\" to set your secure 4-digit code.",
+                "Enable \"Fingerprint / Biometrics\" for fast, seamless unlocking.",
+                "In public places, tap the Eye icon in the Top Bar to mask numbers with asterisks (*****)."
+            ),
+            tip = "Revealing hidden balances while PIN lock is active requires biometric authentication or passcode verification."
+        ),
+        HelpTopic(
+            id = "backup",
+            iconName = "backup",
+            title = "Offline Backup, Restore & Data Portability",
+            subtitle = "Standard JSON export and instant cross-device transfer",
+            description = "All your data is stored 100% locally and offline on your device. You can create complete JSON backups, copy payloads to clipboard, or restore holdings at any time.",
+            steps = listOf(
+                "Tap the Backup icon in the Top Bar or open Settings > Data Backup & Restore.",
+                "Export Tab: Tap \"Share / Save Backup File\" or \"Copy JSON to Clipboard\".",
+                "Import Tab: Paste a JSON backup text or select a backup file and confirm restoration."
+            ),
+            tip = "Regular JSON backups ensure your portfolio data can be restored instantly on any new device."
+        )
+    )
+
     override val settingsTitle = "Settings & Preferences"
     override val generalSettingsSection = "General Settings & UI"
     override val languageSetting = "App Language"
@@ -835,9 +1125,9 @@ object EnglishStrings : Strings {
     override val resetSettingsConfirmTitle = "Reset Application Settings"
     override val resetSettingsConfirmText = "Appearance, language, theme and tolerance will be restored to defaults. Your portfolio assets will remain untouched."
     override val resetSettingsConfirmAction = "Reset Settings"
-    override val resetDataButton = "Reset Database to Sample Data"
+    override val resetDataButton = "Reset Database to Defaults"
     override val resetConfirmTitle = "Reset Holdings Database"
-    override val resetConfirmText = "Are you sure you want to reload default sample assets (Gold, Stocks, USDT, Copper, Fixed Income, etc.)?"
+    override val resetConfirmText = "Are you sure you want to clear all holdings and reset database to clean default values?"
     override val resetConfirmAction = "Reset"
     override val applyAndClose = "Save & Apply"
     override val backupRestoreDesc = "Backup and restore your portfolios, holdings, and categories via standard JSON"
