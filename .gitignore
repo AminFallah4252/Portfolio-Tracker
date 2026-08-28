@@ -15,9 +15,16 @@
 .cxx
 local.properties
 .env
+.env.*
+!.env.example
 .idea/
 .agents/
 .agents
 .agent*
+*.keystore
+*.jks
 debug.keystore
+release.keystore
 *.apk
+*.aab
+*.log
